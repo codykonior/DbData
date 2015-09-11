@@ -6,21 +6,21 @@ Enter an SQL Transaction.
 .DESCRIPTION
 Enter an SQL Transaction.
 
-.PARAMETER SqlCommand.
-An SqlCommand with an SqlConnection.
+.PARAMETER SqlObject.
+An SqlCommand with an SqlConnection, or the output of Edit-SqlData.
 
 .PARAMETER TransactionName
 An optional name for the transaction.
 
 .INPUTS
-Pipe in an SqlCommand.
+Pipe in the output of New-SqlCommand or Edit-SqlData.
 
 .OUTPUTS
 The same as was piped in.
 
 .EXAMPLE
 Import-Module SqlHelper
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Enter-SqlTransaction "ABC" -PassThru
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Enter-SqlTransaction "ABC"
 $sql.ExecuteScalar()
 
 #>
@@ -29,7 +29,7 @@ function Enter-SqlTransaction {
     [CmdletBinding(DefaultParameterSetName = "All")]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [System.Data.SqlClient.SqlCommand] $SqlCommand,
+        $SqlObject,
         [Parameter(Position = 0)]
         [string] $TransactionName,
         [System.Data.IsolationLevel] $IsolationLevel,
@@ -40,25 +40,32 @@ function Enter-SqlTransaction {
     }
 
     Process {
-        if ($SqlCommand.Connection -eq $null) {
-            Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
+        if ($SqlObject -is [System.Data.SqlClient.SqlCommand]) {
+            $sqlCommand = $SqlObject
+        } else {
+            if ($SqlObject -is [PSObject] -and $SqlObject.psobject.Properties["DataAdapter"] -and $SqlObject.DataAdapter -is [System.Data.SqlClient.SqlDataAdapter]) {
+                $sqlCommand = $SqlObject.DataAdapter.SelectCommand
+            } else {
+                Write-Error "SqlObject must be an SqlCommand with an SqlConnection, or an SqlDataAdapter with the same."
+            }
+        }
+
+        if ($sqlCommand.Connection -eq $null) {
+            Write-Error "SqlObject requires a valid associated SqlConnection before a transaction can be started."
         }
         
-        if ($SqlCommand.Connection.State -ne "Open") {
-            Write-Verbose "Opening connection"
-            $SqlCommand.Connection.Open()
+        if ($sqlCommand.Connection.State -ne "Open") {
+            Write-Debug "Opening connection"
+            $sqlCommand.Connection.Open()
         }
 
         if ($IsolationLevel) {
-            $SqlCommand.Transaction = $SqlCommand.Connection.BeginTransaction($IsolationLevel, $TransactionName)
+            $sqlCommand.Transaction = $sqlCommand.Connection.BeginTransaction($IsolationLevel, $TransactionName)
         } else {
-            $SqlCommand.Transaction = $SqlCommand.Connection.BeginTransaction($TransactionName)
+            $sqlCommand.Transaction = $sqlCommand.Connection.BeginTransaction($TransactionName)
         }
 
-        # Pass on the object
-        if ($PassThru) {
-            $SqlCommand
-        }
+        $sqlObject
     }
 
     End {

@@ -19,7 +19,7 @@ Rollback the transaction.
 Pipe in an SqlCommand.
 
 .OUTPUTS
-None unless -PassThru is specified.
+The original SqlCommand.
 
 .EXAMPLE
 Import-Module SqlHelper
@@ -41,8 +41,7 @@ function Exit-SqlTransaction {
         [Parameter(Mandatory = $true, ParameterSetName = "Commit")]
         [switch] $Commit,
         [Parameter(Mandatory = $true, ParameterSetName = "Rollback")]
-        [switch] $Rollback,
-        [switch] $PassThru
+        [switch] $Rollback
     )
 
     Begin {
@@ -63,10 +62,8 @@ function Exit-SqlTransaction {
             $SqlCommand.Transaction.Rollback()
         }
 
-        # Pass on the object
-        if ($PassThru) {
-            $SqlCommand
-        }
+        # Return the object
+        $SqlCommand
     }
 
     End {

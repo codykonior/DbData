@@ -40,8 +40,8 @@ function Get-SqlDataTable {
     Process {
         $sql = $SqlCommand | Get-SqlDataSet -NoSchema:$NoSchema
 
-        # Return first DataTable
-        $sql.Tables[0]
+        # Return first DataTable, it may be empty, which is why we make it an array
+        , $sql.Tables[0]
     }
 
     End {
