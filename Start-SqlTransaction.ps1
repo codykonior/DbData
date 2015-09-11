@@ -20,7 +20,7 @@ The same as was piped in.
 
 .EXAMPLE
 Import-Module SqlHelper
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Start-SqlTransaction "ABC"
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Start-SqlTransaction "ABC" -PassThru
 $sql.ExecuteScalar()
 
 #>
@@ -32,16 +32,19 @@ function Start-SqlTransaction {
         [System.Data.SqlClient.SqlCommand] $SqlCommand,
         [Parameter(Position = 0)]
         [string] $TransactionName,
-        [System.Data.IsolationLevel] $IsolationLevel
+        [System.Data.IsolationLevel] $IsolationLevel,
+        [switch] $PassThru
     )
 
     Begin {
     }
 
     Process {
-                if ($SqlCommand.Connection -eq $null) {
-                    Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
-                }  if ($SqlCommand.Connection.State -ne "Open") {
+        if ($SqlCommand.Connection -eq $null) {
+            Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
+        }
+        
+        if ($SqlCommand.Connection.State -ne "Open") {
             Write-Verbose "Opening connection"
             $SqlCommand.Connection.Open()
         }
@@ -53,7 +56,9 @@ function Start-SqlTransaction {
         }
 
         # Pass on the object
-        $SqlCommand
+        if ($PassThru) {
+            $SqlCommand
+        }
     }
 
     End {
