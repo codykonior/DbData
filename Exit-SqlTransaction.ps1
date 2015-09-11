@@ -1,10 +1,10 @@
 ﻿<#
 
 .SYNOPSIS
-Ends an SQL Transaction.
+Exit an SQL Transaction.
 
 .DESCRIPTION
-Ends an SQL Transaction with a Commit or Rollback.
+Exit an SQL Transaction with a Commit or Rollback.
 
 .PARAMETER SqlCommand.
 An SqlCommand with an SqlConnection and SqlTransaction.
@@ -26,14 +26,14 @@ Import-Module SqlHelper
 $sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount"
 $sql.Connection.Open()
 $sql.ExecuteScalar()
-$sql | Start-SqlTransaction "ABC"
+$sql | Enter-SqlTransaction "ABC"
 $sql.ExecuteScalar()
-$sql | End-SqlTransaction -Commit
+$sql | Exit-SqlTransaction -Commit
 $sql.ExecuteScalar()
 
 #>
 
-function End-SqlTransaction {
+function Exit-SqlTransaction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]

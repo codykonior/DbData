@@ -20,13 +20,13 @@ A DataTable.
 
 .EXAMPLE
 Import-Module SqlHelper -Force
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Invoke-SqlDataTable
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Get-SqlDataTable
 $sql
 
 #>
 
 
-function Invoke-SqlDataTable {
+function Get-SqlDataTable {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -38,10 +38,10 @@ function Invoke-SqlDataTable {
     }
 
     Process {
-        $sql = $SqlCommand | Invoke-SqlDataAdapter -NoSchema:$NoSchema -NoCommandBuilder
+        $sql = $SqlCommand | Get-SqlDataSet -NoSchema:$NoSchema
 
         # Return first DataTable
-        $sql.DataSet.Tables[0]
+        $sql.Tables[0]
     }
 
     End {

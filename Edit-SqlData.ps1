@@ -26,12 +26,12 @@ A PSObject with DataAdapter and DataSet properties.
 
 .EXAMPLE
 Import-Module SqlHelper -Force
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Invoke-SqlDataAdapter -NoCommandBuilder
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Edit-SqlData -NoCommandBuilder
 $sql.DataSet.Tables[0]
 
 #>
 
-function Invoke-SqlDataAdapter {
+function Edit-SqlData {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -50,7 +50,7 @@ function Invoke-SqlDataAdapter {
 
         # Name the tables if they were passed in
         $tableIndex = $null
-        $Table | %{
+        $TableMapping | %{
             [void] $sqlDataAdapter.TableMappings.Add("Table$tableIndex", $_)
             $tableIndex++
         }

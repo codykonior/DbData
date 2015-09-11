@@ -23,12 +23,12 @@ A DataSet.
 
 .EXAMPLE
 Import-Module SqlHelper -Force
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Invoke-SqlDataSet
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select * From sys.master_files" | Get-SqlDataSet
 $sql.Tables[0]
 
 #>
 
-function Invoke-SqlDataSet {
+function Get-SqlDataSet {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -41,7 +41,7 @@ function Invoke-SqlDataSet {
     }
 
     Process {
-        $sql = $SqlCommand | Invoke-SqlDataAdapter -TableMapping $TableMapping -NoSchema:$NoSchema -NoCommandBuilder
+        $sql = $SqlCommand | Edit-SqlData -TableMapping $TableMapping -NoSchema:$NoSchema -NoCommandBuilder
 
         # Return DataSet
         $sql.DataSet

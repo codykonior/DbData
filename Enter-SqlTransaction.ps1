@@ -1,10 +1,10 @@
 ﻿<#
 
 .SYNOPSIS
-Starts an SQL Transaction.
+Enter an SQL Transaction.
 
 .DESCRIPTION
-Starts an SQL Transaction.
+Enter an SQL Transaction.
 
 .PARAMETER SqlCommand.
 An SqlCommand with an SqlConnection.
@@ -20,12 +20,12 @@ The same as was piped in.
 
 .EXAMPLE
 Import-Module SqlHelper
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Start-SqlTransaction "ABC" -PassThru
+$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Enter-SqlTransaction "ABC" -PassThru
 $sql.ExecuteScalar()
 
 #>
 
-function Start-SqlTransaction {
+function Enter-SqlTransaction {
     [CmdletBinding(DefaultParameterSetName = "All")]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
