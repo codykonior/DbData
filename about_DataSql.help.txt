@@ -1,5 +1,5 @@
 ﻿TOPIC
-    about_NetSql
+    about_DataSql
 
 SHORT DESCRIPTION
     ADO.NET SQL Server functionality in PowerShell.
