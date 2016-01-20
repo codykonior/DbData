@@ -47,6 +47,7 @@ function Edit-SqlData {
     Process {
         # Basic type
         $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
+        $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
 
         # Name the tables if they were passed in
         $tableIndex = $null
