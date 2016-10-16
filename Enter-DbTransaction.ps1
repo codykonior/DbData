@@ -19,7 +19,7 @@ Pipe in the output of New-DbCommand or Get-DbData.
 The same as was piped in.
 
 .EXAMPLE
-Import-Module SqlHelper
+Import-Module DbData
 $sql = New-DbConnectionString -ServerInstance AG1L -Database master | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC"
 $sql.ExecuteScalar()
 
