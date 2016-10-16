@@ -26,6 +26,9 @@ Free text recorded by SQL Server so that Database Administrators can identify wh
 .PARAMETER ApplicationIntent
 ReadOnly or ReadWrite for AlwaysOn Availability Groups.
 
+.PARAMETER HostName
+Populated with the computer name being connected from so that Database Administrators can identify where a session comes from, but can be masked.
+
 .PARAMETER ConnectTimeout
 The number of seconds to wait before timing out the connection.
 
@@ -72,7 +75,8 @@ function New-DbConnection {
 
 		$ApplicationName,
 		$ApplicationIntent, # [System.Data.SqlClient.ApplicationIntent] ReadOnly ReadWrite
-
+		$HostName,
+		
         [int] $ConnectTimeout,
         [switch] $MultipleActiveResultSets,
 		[switch] $MultiSubnetFailover
@@ -101,6 +105,9 @@ function New-DbConnection {
         }
 	    if ($ApplicationName) {
 		    $connectionBuilder."Application Name" = $ApplicationName
+	    }
+	    if ($HostName) {
+		    $connectionBuilder."Workstation Id" = $HostName
 	    }
 	    if ($MultipleActiveResultSets) {
 		    $connectionBuilder."MultipleActiveResultSets" = $MultipleActiveResultSets
