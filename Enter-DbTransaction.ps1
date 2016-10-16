@@ -7,25 +7,25 @@ Enter an SQL Transaction.
 Enter an SQL Transaction.
 
 .PARAMETER SqlObject.
-An SqlCommand with an SqlConnection, or the output of Edit-SqlData.
+An SqlCommand with an SqlConnection, or the output of Get-DbData.
 
 .PARAMETER TransactionName
 An optional name for the transaction.
 
 .INPUTS
-Pipe in the output of New-SqlCommand or Edit-SqlData.
+Pipe in the output of New-DbCommand or Get-DbData.
 
 .OUTPUTS
 The same as was piped in.
 
 .EXAMPLE
 Import-Module SqlHelper
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount" | Enter-SqlTransaction "ABC"
+$sql = New-DbConnectionString -ServerInstance AG1L -Database master | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC"
 $sql.ExecuteScalar()
 
 #>
 
-function Enter-SqlTransaction {
+function Enter-DbTransaction {
     [CmdletBinding(DefaultParameterSetName = "All")]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]

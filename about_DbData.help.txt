@@ -1,5 +1,5 @@
 ﻿TOPIC
-    about_DataSql
+    about_DbData
 
 SHORT DESCRIPTION
     ADO.NET SQL Server functionality in PowerShell.
@@ -15,24 +15,24 @@ LONG DESCRIPTION
 REQUIREMENTS
     Requires PowerShell 2.0 or later.
     Requires .NET 3.5 or later installed.
-    High availability options passed to New-SqlConnectionString require .NET 4.5 or later installed.
+    High availability options passed to New-DbConnectionString require .NET 4.5 or later installed.
 
 EXAMPLE #1
     This is how you'd connect to a database and select just the data from a table.
 
-    New-SqlConnectionString .\SQL2014 master | New-SqlCommand "Select * From sys.master_files" | Get-SqlDataTable
+    New-DbConnectionString AG1L master | New-DbCommand "Select * From sys.master_files" | Get-DbData
 
 EXAMPLE #2
     Connect to a database and get multiple result sets into different tables.
 
-    $sql = New-SqlConnectionString .\SQL2014 master | New-SqlCommand "Select * From sys.databases; Select * From sys.master_files" | Get-SqlDataSet -TableMapping "Databases", "Files"
+    $sql = New-DbConnection AG1L master | New-DbCommand "Select * From sys.databases; Select * From sys.master_files" | Get-DbData -TableMapping "Databases", "Files"
     $sql.Tables["Databases"]
     $sql.Tables["Files"]
 
 EXAMPLE #3
     Connect to a database, begin a transaction, get an adapter to a table, add data, then rollback.
 
-    $sql = New-SqlConnectionString .\SQL2014 msdb | New-SqlCommand "Select * From dbo.suspect_pages" | Enter-SqlTransaction | Edit-SqlData
+    $sql = New-DbConnection AG1L msdb | New-DbCommand "Select * From dbo.suspect_pages" | Enter-DbTransaction | Get-DbData
 
     # Add the row
     $row = $sql.DataSet.Tables[0].NewRow()
@@ -47,6 +47,6 @@ EXAMPLE #3
     # Update, it will be saved in the database at this point
     $sql.DataAdapter.Update($sql.DataSet)
     # But roll it back
-    $sql.DataAdapter.SelectCommand | Exit-SqlTransaction -Rollback
+    $sql.DataAdapter.SelectCommand | Exit-DbTransaction -Rollback
 
 LINKS

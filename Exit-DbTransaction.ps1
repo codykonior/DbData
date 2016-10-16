@@ -23,17 +23,17 @@ The original SqlCommand.
 
 .EXAMPLE
 Import-Module SqlHelper
-$sql = New-SqlConnectionString -ServerInstance .\SQL2014 -Database master | New-SqlCommand "Select @@Trancount"
+$sql = New-DbConnectionString -ServerInstance AG1L-Database master | New-DbCommand "Select @@Trancount"
 $sql.Connection.Open()
 $sql.ExecuteScalar()
-$sql | Enter-SqlTransaction "ABC"
+$sql | Enter-DbTransaction "ABC"
 $sql.ExecuteScalar()
-$sql | Exit-SqlTransaction -Commit
+$sql | Exit-DbTransaction -Commit
 $sql.ExecuteScalar()
 
 #>
 
-function Exit-SqlTransaction {
+function Exit-DbTransaction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]

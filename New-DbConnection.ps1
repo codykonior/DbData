@@ -9,7 +9,7 @@ A simplified and safer way of creating a dynamic connection string instead of tr
 There is far more possible options than are provided here.
 
 .PARAMETER ServerInstance
-Defaults to a local host unnamed instance. Otherwise specify as NAME\INSTANCE.
+Specify as NAME\INSTANCE.
 
 .PARAMETER DatabaseName
 The database name if required. Defaults to no database, but it's strongly recommended you use something (at least master) so that connection pooling can be used automatically.
@@ -44,31 +44,35 @@ A connection string.
 .EXAMPLE
 Connect to the Northwind database on the local instance.
     
-New-SqlConnectionString -Database Northwind
+New-DbConnectionString -Database Northwind
 # Data Source=(local);Initial Catalog=Northwind;Integrated Security=True
 
 .EXAMPLE
 Connect to a remote server with a username and password.
     
-New-SqlConnectionString Frodo\SQL2014 Northwind some_user unsafe_password
+New-DbConnectionString Frodo\SQL2014 Northwind some_user unsafe_password
 # Data Source=Frodo\SQL2014;Initial Catalog=Northwind;Integrated Security=False;User ID=some_user;Password=unsafe_password
 
 #>
 
-function New-SqlConnectionString {
+function New-DbConnection {
 	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0)]
+		[Parameter(Mandatory = $true, Position = 0)]
         [ValidateNotNullOrEmpty()]
-		[string] $ServerInstance = "(local)",
+		[string] $ServerInstance,
 		[Parameter(Mandatory = $true, Position = 1)]
-		[string] $Database,
+        [ValidateNotNullOrEmpty()]
+        [string] $Database,
+
 		[Parameter(ParameterSetName = "SQL Authentication", Position = 2)]
 		$UserName,
 		[Parameter(ParameterSetName = "SQL Authentication", Position = 3)]
 		$Password,
+
 		$ApplicationName,
 		$ApplicationIntent, # [System.Data.SqlClient.ApplicationIntent] ReadOnly ReadWrite
+
         [int] $ConnectTimeout,
         [switch] $MultipleActiveResultSets,
 		[switch] $MultiSubnetFailover
