@@ -72,7 +72,7 @@ FunctionsToExport = @(
 	'Get-DbData', 
 	'New-DbCommand', 
 	'New-DbConnection', 
-	'Use-DbRetr')
+	'Use-DbRetry')
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'
@@ -99,4 +99,4 @@ AliasesToExport = '*'
 # DefaultCommandPrefix = ''
 
 }
-
+
