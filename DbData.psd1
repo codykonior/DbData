@@ -48,7 +48,7 @@ Copyright = '(c) 2015 Cody Konior. All rights reserved.'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-# RequiredModules = @()
+RequiredModules = @('Error')
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -66,7 +66,13 @@ Copyright = '(c) 2015 Cody Konior. All rights reserved.'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = '*'
+FunctionsToExport = @(
+	'Enter-DbTransaction', 
+	'Exit-DbTransaction', 
+	'Get-DbData', 
+	'New-DbCommand', 
+	'New-DbConnection', 
+	'Use-DbRetr')
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'

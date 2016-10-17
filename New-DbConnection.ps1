@@ -9,7 +9,7 @@ A simplified and safer way of creating a dynamic connection string instead of tr
 There is far more possible options than are provided here.
 
 .PARAMETER ServerInstance
-Specify as NAME\INSTANCE.
+Specify as ServerName\Instance.
 
 .PARAMETER DatabaseName
 The database name if required. Defaults to no database, but it's strongly recommended you use something (at least master) so that connection pooling can be used automatically.
@@ -45,36 +45,38 @@ None. You cannot pipe objects.
 A connection string.
 
 .EXAMPLE
-Connect to the Northwind database on the local instance.
-    
-New-DbConnectionString -Database Northwind
-# Data Source=(local);Initial Catalog=Northwind;Integrated Security=True
+Connect to a remote server.
+
+$serverInstance = "AGL1"
+New-DbConnection $serverInstance
+
+# Data Source=AG1L;Integrated Security=True
 
 .EXAMPLE
 Connect to a remote server with a username and password.
     
-New-DbConnectionString Frodo\SQL2014 Northwind some_user unsafe_password
-# Data Source=Frodo\SQL2014;Initial Catalog=Northwind;Integrated Security=False;User ID=some_user;Password=unsafe_password
+$serverInstance = "AGL1"
+New-DbConnection $serverInstance Northwind some_user unsafe_password
+
+# Data Source=AGL1;Initial Catalog=Northwind;Integrated Security=False;User ID=some_user;Password=unsafe_password
 
 #>
 
 function New-DbConnection {
 	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory = $true, Position = 0)]
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [ValidateNotNullOrEmpty()]
+        [Alias("SqlServerName")]
 		[string] $ServerInstance,
-		[Parameter(Mandatory = $true, Position = 1)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Database,
+        
+        $Database,
 
-		[Parameter(ParameterSetName = "SQL Authentication", Position = 2)]
 		$UserName,
-		[Parameter(ParameterSetName = "SQL Authentication", Position = 3)]
 		$Password,
 
 		$ApplicationName,
-		$ApplicationIntent, # [System.Data.SqlClient.ApplicationIntent] ReadOnly ReadWrite
+		[System.Data.SqlClient.ApplicationIntent] $ApplicationIntent,
 		$HostName,
 		
         [int] $ConnectTimeout,
@@ -89,8 +91,10 @@ function New-DbConnection {
 	    $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
 
 	    $connectionBuilder."Data Source" = $ServerInstance
-	    $connectionBuilder."Initial Catalog" = $Database
-	    if ($PSCmdlet.ParameterSetName -eq "SQL Authentication"){
+            if ($Database) {
+    	        $connectionBuilder."Initial Catalog" = $Database
+	    }
+        if ($UserName){
 		    $connectionBuilder."Integrated Security" = $false
 		    $connectionBuilder."User ID" = $UserName
 		    $connectionBuilder."Password" = $Password

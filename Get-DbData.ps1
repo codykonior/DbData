@@ -1,10 +1,10 @@
 <#
 
 .SYNOPSIS
-Execute an SqlCommand with a SqlDataAdapter.
+Execute an SqlCommand.
 
 .DESCRIPTION
-Execute an SqlCommand with a SqlDataAdapter.
+Execute an SqlCommand. Attempts to extract the schema and store it in a table property called SqlDataAdapter. It also adds an Alter() method to each table which optionally can be used with hash tables to do an upsert (on tables with a primary key).
 
 .PARAMETER SqlCommand.
 An SqlCommand.
@@ -12,30 +12,51 @@ An SqlCommand.
 .PARAMETER TableMapping
 An optional list of table names to use for the result set, in order. By default these are Table, Table1, Table2, etc.
 
+.PARAMETER Rows
+An array of DataRow objects from a DataTable. Note that this cannot be edited as there's no link to their source DataTable.
+
+.PARAMETER Table
+By default a DataTable will be returned. This usually enumerates automatically.
+
+.PARAMETER Set
+A DataSet can be returned if you want one, usually if you have multiple DataTables.
+
 .PARAMETER NoSchema
-By default the DataSet attempts to pre-fill itself with the schema information. This can be skipped.
+For some simple operations, where no editing is required, you might want to skip schema gathering.
 
 .PARAMETER NoCommandBuild
-By default the DataAdapter attempts to pre-fill a CommandBuilder for Insert/Update/Delete commands. This can be skipped.
-
-.PARAMETER DataSet
-By default a DataTable is returned. But you can return an entire DataSet.
+For some simple operations, where no editing is required, you might want to skip command building.
 
 .INPUTS
 Pipe in an SqlCommand.
 
 .OUTPUTS
-A PSObject with DataAdapter and DataSet properties.
+A DataTable, DataSet, or DataRows.
 
 .EXAMPLE
+Create a dummy table, insert two rows, edit one of them, then insert a 3rd row. It appears Identity_Insert is handled automatically.
 
-Create Table dbo.Moo (a Int Identity (1, 1) Primary Key, b Nvarchar(Max))
-Import-Module DbData -Force
-$table = New-DbConnection -ServerInstance . -Database master | New-DbCommand "Select * From dbo.Moo" | Get-DbData 
-$table.Alter(@{ a = 1; b = "A" })
-$table.Alter(@{ b = "B" })
-$table.Alter(@{ a = 1; b = "C" })
-$table.Alter(@{ a = 4; b = "D" })
+Import-Module DbData
+$serverInstance = "AG1L"
+New-DbConnection $serverInstance | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (a Int Identity (1, 1) Primary Key, b Nvarchar(Max))" | Get-DbData
+$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo" | Get-DbData
+$dbData.Alter(@{ a = 1; b = "A" })
+$dbData.Alter(@{ b = "B" })
+$dbData.Alter(@{ a = 1; b = "C" })
+$dbData.Alter(@{ a = 4; b = "D" })
+
+$dbData | Format-List
+
+<#
+a : 1
+b : C
+
+a : 2
+b : B
+
+a : 4
+b : D
+#>
 
 #>
 
@@ -47,21 +68,17 @@ function Get-DbData {
         [string[]] $TableMapping = @(),
 
         [switch] $Rows,
-        [switch] $NoSchema,
-        [switch] $NoCommandBuilder,
+        [switch] $Table = $true,
+        [switch] $Set,
 
-        [switch] $AsDataSet
+        [switch] $NoSchema,
+        [switch] $NoCommandBuilder
     )
 
-    Begin {
+    begin {
     }
 
-    Process {
-        if ($Rows) {
-            $NoSchema = $true
-            $NoCommandBuilder = $true
-        }
-
+    process {
         # Basic type
         $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
         $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
@@ -81,7 +98,7 @@ function Get-DbData {
             try {
                 [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
             } catch {
-                Write-Verbose "No schema information could be retrieved: $_"
+                Write-Verbose "You can't edit this data: $_"
             }
         }
 
@@ -96,7 +113,7 @@ function Get-DbData {
                 [void] $commandBuilder.GetInsertCommand()
                 [void] $commandBuilder.GetDeleteCommand()
             } catch { 
-                Write-Verbose "No CommandBuilder was possible: $_"
+                Write-Verbose "You can't edit this data: $_"
             }
         }
 
@@ -108,13 +125,8 @@ function Get-DbData {
             
             # Process multiple rows one at a time
             foreach ($row in $Rows) {
-                # If we are a data set, then use the first table
-                if ($this -is [System.Data.DataTable]) {
-                    $table = $this
-                } else {
-                    $table = $this.Tables[0]
-                }
-
+                $table = $this
+                
                 # Get the incoming column names
                 if ($row -is [System.Data.DataRow]) {
                     $rowName = $row.Table.Columns | Select -ExpandProperty ColumnName
@@ -162,27 +174,24 @@ function Get-DbData {
             $this.SqlDataAdapter.Update($this)
         }
 
+        $dataSet.Tables | %{
+            # Stores the data adapter we need for later use
+            Add-Member -InputObject $_ -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
+            # Lets you either add a row to the data easily, or, upsert 
+            Add-Member -InputObject $_ -MemberType ScriptMethod -Name Alter -Value $alterScript
+        }
+
         if ($Rows) {
-            if ($dataSet.Tables.Count -ne 0) {
-                $dataSet.Tables[0].Rows
-            } else {
-                @()
+            $dataSet.Tables | %{
+                $_.Rows
             }
-        } elseif ($AsDataSet) {
-             # Stores the data adapter we need for later use
-            Add-Member -InputObject $dataSet -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
-            # Updates data in the database using the data adapter
-            Add-Member -InputObject $dataSet -MemberType ScriptMethod -Name Alter -Value $alterScript -PassThru
+        } elseif ($Set) {
+            $dataSet
         } else {
-           if ($dataSet.Tables.Count -ne 0) { # There may be none
-                # Stores the data adapter we need for later use
-                Add-Member -InputObject $dataSet.Tables[0] -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
-                # Lets you either add a row to the data easily, or, upsert 
-                Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript -PassThru
-            }
+            $dataSet.Tables
         }
     }
 
-    End {
+    end {
     }
 }

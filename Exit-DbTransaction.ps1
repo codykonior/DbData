@@ -1,13 +1,16 @@
-﻿<#
+<#
 
 .SYNOPSIS
-Exit an SQL Transaction.
+Exit a SQL transaction.
 
 .DESCRIPTION
-Exit an SQL Transaction with a Commit or Rollback.
+Commit or rollback a SQL transaction.
 
-.PARAMETER SqlCommand.
-An SqlCommand with an SqlConnection and SqlTransaction.
+.PARAMETER SqlObject
+A SqlCommand with a SqlConnection and SqlTransaction. This can be extracted
+from a DataTable or a DataSet, but not a DataRow.
+
+If the DataSet has multiple tables only the first one is used.
 
 .PARAMETER Commit
 Commit the transaction.
@@ -16,20 +19,24 @@ Commit the transaction.
 Rollback the transaction.
 
 .INPUTS
-Pipe in an SqlCommand.
+Pipe in SqlCommand or a DataSet. You cannot pipe in a DataTable because it
+will be enumerated into DataRows.
 
 .OUTPUTS
-The original SqlCommand.
+(Optional) Input.
 
 .EXAMPLE
-Import-Module SqlHelper
-$sql = New-DbConnectionString -ServerInstance AG1L-Database master | New-DbCommand "Select @@Trancount"
-$sql.Connection.Open()
-$sql.ExecuteScalar()
-$sql | Enter-DbTransaction "ABC"
-$sql.ExecuteScalar()
-$sql | Exit-DbTransaction -Commit
-$sql.ExecuteScalar()
+Show a transaction being created and destroyed.
+
+Import-Module DbData
+$serverInstance = "AG1L"
+$dbData = New-DbConnection $serverInstance | New-DbCommand "Select @@Trancount"
+$dbData.Connection.Open()
+$dbData.ExecuteScalar()
+$dbData | Enter-DbTransaction "ABC"
+$dbData.ExecuteScalar()
+$dbData | Exit-DbTransaction -Commit
+$dbData.ExecuteScalar()
 
 #>
 
@@ -37,35 +44,47 @@ function Exit-DbTransaction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [System.Data.SqlClient.SqlCommand] $SqlCommand,
-        [Parameter(Mandatory = $true, ParameterSetName = "Commit")]
+        $SqlObject,
+
         [switch] $Commit,
-        [Parameter(Mandatory = $true, ParameterSetName = "Rollback")]
-        [switch] $Rollback
+        [switch] $Rollback,
+
+        [switch] $PassThru
     )
 
-    Begin {
+    begin {
     }
 
-    Process {
-        if ($SqlCommand.Connection -eq $null) {
+    process {
+        if ($SqlObject -is [System.Data.SqlClient.SqlCommand]) {
+            $sqlCommand = $SqlObject
+        } elseif ($SqlObject -is [System.Data.DataTable]) {
+            $sqlCommand = $SqlObject.SqlDataAdapter.SelectCommand
+        } elseif ($SqlObject -is [System.Data.DataSet]) {
+            $sqlCommand = $SqlObject.Tables[0].SqlDataAdapter.SelectCommand
+        } else {
+            Write-Error "SqlObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
+        }
+
+        if (!$sqlCommand.Connection) {
             Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
         } 
 
-        if ($SqlCommand.Transaction -eq $null) {
+        if (!$SqlCommand.Transaction) {
             Write-Error "SqlCommand needs an active transaction before it can be ended."
         }
 
-        if ($PSCmdlet.ParameterSetName -eq "Commit") {
-            $SqlCommand.Transaction.Commit()
+        if ($Rollback) {
+            $sqlCommand.Transaction.Rollback()
         } else {
-            $SqlCommand.Transaction.Rollback()
+            $sqlCommand.Transaction.Commit()
         }
 
-        # Return the object
-        $SqlCommand
+        if ($passThru) {
+            $SqlObject
+        }
     }
 
-    End {
+    end {
     }
 }

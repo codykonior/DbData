@@ -1,12 +1,10 @@
-﻿<#
+<#
 
 .SYNOPSIS
-
-Used to retry operations when using SQL objects. It will catch deadlocks
-and timeouts, and retry them. It will retry any error which "seems" to
-come from SQL, but won't retry other errors.
+Retry SQL operations that may have timeouts or deadlocks.
 
 .DESCRIPTION
+Retry SQL operations that may have timeouts or deadlocks.
 
 .PARAMETER
 
@@ -15,6 +13,19 @@ come from SQL, but won't retry other errors.
 .OUTPUTS
 
 .EXAMPLE
+Create a dummy table, begin a transaction, and insert data. Then try to delete the data on another connection and show the retries occuring due to the timeout.
+
+Import-Module DbData
+$serverInstance = "AG1L"
+New-DbConnection $serverInstance | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (a Int Identity (1, 1) Primary Key, b Nvarchar(Max))" | Get-DbData
+$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo" | Enter-DbTransaction -PassThru | Get-DbData
+$dbData.Alter(@{ a = 1; b = "A" })
+
+$dbData2 = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | %{
+    Use-DbRetry { Get-DbData $_ } -Verbose
+}
+
+Exit-DbTransaction $dbData -Rollback
 
 #>
 
@@ -38,21 +49,21 @@ function Use-DbRetry {
         } catch {
             if (Test-Error -Type System.Data.SqlClient.SqlException) {
                 if (Test-Error -Test @{ Number = 1205 }) {
-                    Write-Verbose "Caught Deadlock. Retry $retry."
+                    Write-Verbose "Caught SQL deadlock. Retry $retry."
                     if (!$InfiniteDeadlockRetry) {
-                        $retry--
+                        $retry++
                     }
 
                     Start-Sleep -Milliseconds (Get-Random 5000) # Somewhere up to 5 seconds
                 } elseif (Test-Error -Test @{ Number = -2 }) {
-                    Write-Verbose "Caught SQL Timeout. Retry $retry."
-                    $retry--
+                    Write-Verbose "Caught SQL timeout. Retry $retry."
+                    $retry++
                 } else {
-                    Write-Verbose "Caught unknown SQL Error. $(Resolve-Error -AsString)"
-                    $retry--
+                    Write-Verbose "Caught unknown SQL error: $(Resolve-Error -AsString)"
+                    $retry++
                 }
             } else {
-                Write-Verbose "Caught unknown non-SQL Error. $(Resolve-Error -AsString)"
+                Write-Verbose "Caught unknown non-SQL error: $(Resolve-Error -AsString)"
                 throw
             }
         } 

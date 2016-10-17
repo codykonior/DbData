@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 Enter an SQL Transaction.
@@ -16,17 +16,22 @@ An optional name for the transaction.
 Pipe in the output of New-DbCommand or Get-DbData.
 
 .OUTPUTS
-The same as was piped in.
+(Optionally) Whatever was piped in.
 
 .EXAMPLE
+Begin a transaction and show the transaction count increased. Then rollback and show the transaction count decreased.
+
 Import-Module DbData
-$sql = New-DbConnectionString -ServerInstance AG1L -Database master | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC"
+$serverInstance = "AG1L"
+$sql = New-DbConnection $serverInstance | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC" -PassThru
+$sql.ExecuteScalar()
+$sql | Exit-DbTransaction -Rollback
 $sql.ExecuteScalar()
 
 #>
 
 function Enter-DbTransaction {
-    [CmdletBinding(DefaultParameterSetName = "All")]
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         $SqlObject,
@@ -36,21 +41,21 @@ function Enter-DbTransaction {
         [switch] $PassThru
     )
 
-    Begin {
+    begin {
     }
 
-    Process {
+    process {
         if ($SqlObject -is [System.Data.SqlClient.SqlCommand]) {
             $sqlCommand = $SqlObject
+        } elseif ($SqlObject -is [System.Data.DataTable]) {
+            $sqlCommand = $SqlObject.SqlDataAdapter.SelectCommand
+        } elseif ($SqlObject -is [System.Data.DataSet]) {
+            $sqlCommand = $SqlObject.Tables[0].SqlDataAdapter.SelectCommand
         } else {
-            if ($SqlObject -is [PSObject] -and $SqlObject.psobject.Properties["DataAdapter"] -and $SqlObject.DataAdapter -is [System.Data.SqlClient.SqlDataAdapter]) {
-                $sqlCommand = $SqlObject.DataAdapter.SelectCommand
-            } else {
-                Write-Error "SqlObject must be an SqlCommand with an SqlConnection, or an SqlDataAdapter with the same."
-            }
+            Write-Error "SqlObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
         }
 
-        if ($sqlCommand.Connection -eq $null) {
+        if (!$sqlCommand.Connection) {
             Write-Error "SqlObject requires a valid associated SqlConnection before a transaction can be started."
         }
         
@@ -65,9 +70,11 @@ function Enter-DbTransaction {
             $sqlCommand.Transaction = $sqlCommand.Connection.BeginTransaction($TransactionName)
         }
 
-        $sqlObject
+        if ($PassThru) {
+            $SqlObject
+        }
     }
 
-    End {
+    end {
     }
 }

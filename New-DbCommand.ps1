@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 Create an SQL Command object.
