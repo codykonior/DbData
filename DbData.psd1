@@ -21,7 +21,7 @@ GUID = '64e7d769-fed6-4ef8-9ae3-c65411af7e89'
 Author = 'Cody Konior'
 
 # Company or vendor of this module
-CompanyName = 'Safe SQL'
+CompanyName = 'Cody Konior'
 
 # Copyright statement for this module
 Copyright = '(c) 2015 Cody Konior. All rights reserved.'
@@ -70,8 +70,11 @@ FunctionsToExport = @(
 	'Enter-DbTransaction', 
 	'Exit-DbTransaction', 
 	'Get-DbData', 
+    'Get-DbSmo',
+    'Get-DbWmi',
 	'New-DbCommand', 
 	'New-DbConnection', 
+    'New-DbBulkCopy',
 	'Use-DbRetry')
 
 # Cmdlets to export from this module

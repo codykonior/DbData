@@ -53,8 +53,6 @@ function Use-DbRetry {
                     if (!$InfiniteDeadlockRetry) {
                         $retry++
                     }
-
-                    Start-Sleep -Milliseconds (Get-Random 5000) # Somewhere up to 5 seconds
                 } elseif (Test-Error -Test @{ Number = -2 }) {
                     Write-Verbose "Caught SQL timeout. Retry $retry."
                     $retry++
@@ -62,10 +60,18 @@ function Use-DbRetry {
                     Write-Verbose "Caught unknown SQL error: $(Resolve-Error -AsString)"
                     $retry++
                 }
+            } elseif (Test-Error -Type Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException) {
+                Write-Verbose "Caught SQL policy evaluation error. Retry $retry."
+                $retry++
             } else {
                 Write-Verbose "Caught unknown non-SQL error: $(Resolve-Error -AsString)"
                 throw
             }
+
+            if ($retry -ge $MaxRetry) {
+                throw
+            }
+            Start-Sleep -Milliseconds (Get-Random 5000) # Somewhere up to 5 seconds
         } 
     }
 }

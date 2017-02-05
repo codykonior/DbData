@@ -79,6 +79,7 @@ function New-DbConnection {
 		[System.Data.SqlClient.ApplicationIntent] $ApplicationIntent,
 		$HostName,
 		
+        [switch] $Pooling,
         [int] $ConnectTimeout,
         [switch] $MultipleActiveResultSets,
 		[switch] $MultiSubnetFailover
@@ -113,6 +114,9 @@ function New-DbConnection {
 	    if ($HostName) {
 		    $connectionBuilder."Workstation Id" = $HostName
 	    }
+        if ($Pooling) {
+            $connectionBuilder."Pooling" = $Pooling
+        }
 	    if ($MultipleActiveResultSets) {
 		    $connectionBuilder."MultipleActiveResultSets" = $MultipleActiveResultSets
 	    } 

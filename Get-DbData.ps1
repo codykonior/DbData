@@ -70,126 +70,180 @@ function Get-DbData {
         [switch] $Rows,
         [switch] $Table = $true,
         [switch] $Set,
+        [switch] $NonQuery,
 
         [switch] $NoSchema,
-        [switch] $NoCommandBuilder
+        [switch] $NoCommandBuilder,
+
+        $PrintOutput = (New-Object Collections.ArrayList)
     )
 
     begin {
+        $infoMessageScript = {
+            Set-StrictMode -Version Latest
+            $ErrorActionPreference = "Stop"
+
+            try {
+                $_ | Select -ExpandProperty Errors | %{
+                    [void] $this.PrintOutput.Add($_)
+
+                    if ($_.Class -le 10) {
+                        "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
+                    } else {
+                        # Should be Write-Error but it doesn't seem to trigger properly (after -FireInfoMessageEventOnUserErrors) and so it would otherwise up getting lost
+                        "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
+                    }
+                }
+            } catch { 
+                Write-Host $_    
+            }
+        }
     }
 
     process {
-        # Basic type
-        $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
-        $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
+        $SqlCommand.Connection | Add-Member -MemberType NoteProperty -Name PrintOutput -Value (New-Object Collections.ArrayList)
+        $SqlCommand.Connection.add_InfoMessage($infoMessageScript)
 
-        # Name the tables if they were passed in
-        $tableIndex = $null
-        $TableMapping | %{
-            [void] $sqlDataAdapter.TableMappings.Add("Table$tableIndex", $_)
-            $tableIndex++
-        }
+        if ($NonQuery) {
+            if ($SqlCommand.Connection.State -eq "Open") {
+                $SqlCommand.ExecuteNonQuery()
+            } else {
+                $SqlCommand.Connection.Open()
+                $SqlCommand.ExecuteNonQuery()
+                $SqlCommand.Connection.Close()
+            }
+        } else {
+            # Basic type
+            $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
+            $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
 
-        # Basic type
-        $dataSet = New-Object System.Data.DataSet
+            # Name the tables if they were passed in
+            $tableIndex = $null
+            $TableMapping | %{
+                [void] $sqlDataAdapter.TableMappings.Add("Table$tableIndex", $_)
+                $tableIndex++
+            }
+
+            # Basic type
+            $dataSet = New-Object System.Data.DataSet
         
-        # Retrieve schema information
-        if (!$NoSchema) {
-            try {
-                [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
-            } catch {
-                Write-Verbose "You can't edit this data: $_"
+            # Retrieve schema information
+            if (!$NoSchema) {
+                try {
+                    [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
+                } catch {
+                    Write-Verbose "You can't edit this data: $_"
+                }
             }
-        }
 
-        # Get the data
-        [void] $sqlDataAdapter.Fill($dataSet)
-
-        # Add Insert/Update/Delete commands
-        if (!$NoCommandBuilder) {
-            try {
-                $commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($SqlDataAdapter)
-                [void] $commandBuilder.GetUpdateCommand()
-                [void] $commandBuilder.GetInsertCommand()
-                [void] $commandBuilder.GetDeleteCommand()
-            } catch { 
-                Write-Verbose "You can't edit this data: $_"
+            # Execute / get the data
+            [void] $sqlDataAdapter.Fill($dataSet)
+        
+            # Add Insert/Update/Delete commands
+            if (!$NoCommandBuilder) {
+                try {
+                    $commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($SqlDataAdapter)
+                    [void] $commandBuilder.GetUpdateCommand()
+                    [void] $commandBuilder.GetInsertCommand()
+                    [void] $commandBuilder.GetDeleteCommand()
+                } catch { 
+                    Write-Verbose "You can't edit this data: $_"
+                }
             }
-        }
 
-        $alterScript = {
-            [CmdletBinding()]
-            param (
-                $Rows
-            )
+            $alterScript = {
+                [CmdletBinding()]
+                param (
+                    $Rows
+                )
             
-            # Process multiple rows one at a time
-            foreach ($row in $Rows) {
-                $table = $this
+                # Process multiple rows one at a time
+                foreach ($row in $Rows) {
+                    $table = $this
                 
-                # Get the incoming column names
-                if ($row -is [System.Data.DataRow]) {
-                    $rowName = $row.Table.Columns | Select -ExpandProperty ColumnName
-                } elseif ($row -is [Hashtable]) {
-                    $rowName = $row.Keys
-                } else {
-                    Write-Error "Unknown row type of $($row.GetType().FullName)"
-                }
-
-                # Get the primary key names and values, if any
-                $pkName = $table.PrimaryKey | Select -ExpandProperty ColumnName
-
-                $pkValue = New-Object Collections.ArrayList
-                foreach ($name in $pkName) {
-                    if ($rowName -contains $name) {
-                        [void] $pkValue.Add($row[$name])    
+                    # Get the incoming column names
+                    if ($row -is [System.Data.DataRow]) {
+                        $rowName = $row.Table.Columns | Select -ExpandProperty ColumnName
+                    } elseif ($row -is [Hashtable]) {
+                        $rowName = $row.Keys
+                    } elseif ($row -is [PSObject]) {
+                        $newRow = New-Object Hashtable
+                        $row.psobject.Properties | %{
+                            $newRow.Add($_.Name, $_.Value)
+                        }
+                        $row = $newRow
+                        $rowName = $row.Keys
                     } else {
-                        $pkValue = $null
-                        break
+                        Write-Error "Unknown row type of $($row.GetType().FullName)"
                     }
-                }
 
-                if ($pkValue) {
-                    $newRow = $table.Rows.Find($pkValue.ToArray())
-                } else {
-                    $newRow = $null
-                }
+                    # Get the primary key names and values, if any
+                    $pkName = $table.PrimaryKey | Select -ExpandProperty ColumnName
 
-                if ($newRow) {
-                    foreach ($property in ($rowName | Where { $pkName -notcontains $_ })) {
-                        if ($newRow[$property] -ne $row[$property]) {
-                            $newRow[$property] = $row[$property]
+                    $pkValue = New-Object Collections.ArrayList
+                    foreach ($name in $pkName) {
+                        if ($rowName -contains $name) {
+                            [void] $pkValue.Add($row[$name])
+                        } else {
+                            $pkValue = $null
+                            break
                         }
                     }
-                } else {
-                    $newRow = $table.NewRow()
-                    foreach ($property in $rowName) {
-                        $newRow[$property] = $row[$property]
+
+                    if ($pkValue) {
+                        $newRow = $table.Rows.Find($pkValue.ToArray())
+                    } else {
+                        $newRow = $null
                     }
 
-                    $table.Rows.Add($newRow)
+                    if ($newRow) {
+                        foreach ($property in ($rowName | Where { $pkName -notcontains $_ })) {
+                            if ($newRow[$property] -ne $row[$property]) {
+                                if ($row[$property] -ne $null) {
+                                    $newRow[$property] = $row[$property]
+                                } else {
+                                    $newRow[$property] = [DBNull]::Value
+                                }
+                            }
+                        }
+                    } else {
+                        $newRow = $table.NewRow()
+                        foreach ($property in $rowName) {
+                            if ($row[$property] -ne $null) {
+                                $newRow[$property] = $row[$property]
+                            } else {
+                                $newRow[$property] = [DBNull]::Value
+                            }
+                        }
+
+                        $table.Rows.Add($newRow)
+                    }
                 }
+
+                $this.SqlDataAdapter.Update($this)
             }
 
-            $this.SqlDataAdapter.Update($this)
-        }
-
-        $dataSet.Tables | %{
-            # Stores the data adapter we need for later use
-            Add-Member -InputObject $_ -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
-            # Lets you either add a row to the data easily, or, upsert 
-            Add-Member -InputObject $_ -MemberType ScriptMethod -Name Alter -Value $alterScript
-        }
-
-        if ($Rows) {
             $dataSet.Tables | %{
-                $_.Rows
+                # Stores the data adapter we need for later use
+                Add-Member -InputObject $_ -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
+                # Lets you either add a row to the data easily, or, upsert 
+                Add-Member -InputObject $_ -MemberType ScriptMethod -Name Alter -Value $alterScript
             }
-        } elseif ($Set) {
-            $dataSet
-        } else {
-            $dataSet.Tables
+
+            if ($Rows) {
+                $dataSet.Tables | %{
+                    $_.Rows
+                }
+            } elseif ($Set) {
+                $dataSet
+            } else {
+                $dataSet.Tables
+            }
         }
+
+        [void] $SqlCommand.Connection.remove_InfoMessage($infoMessageScript)
+        $SqlCommand.Connection.PrintOutput | %{ [void] $PrintOutput.Add($_) }
+        $SqlCommand.Connection.psobject.Members.Remove("PrintOutput")
     }
 
     end {

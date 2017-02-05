@@ -94,7 +94,6 @@ function New-DbCommand {
         [System.Data.CommandType] $CommandType = "Text",
 
         [int] $CommandTimeout,
-        [string] $VerboseVariable,
         [switch] $FireInfoMessageEventOnUserErrors,
 
         [System.Data.SqlClient.SqlTransaction] $Transaction
@@ -134,50 +133,6 @@ function New-DbCommand {
             }
             [void] $sqlCommand.Parameters.Add($parameter)
         }
-
-        $script1 = @'
-[CmdletBinding()]
-param (
-    $sender,
-    $event
-)
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-'@
-
-        $script2 = @'
-
-if (Test-Path variable:global:VariableName) {
-    $VerboseVariableVariable = Get-Variable -Scope "Global" -Name VariableName
-} else {
-    $VerboseVariableVariable = New-Variable -Scope "Global" -Name VariableName -Value (New-Object Collections.ArrayList) -Passthru
-}
-
-$event.Errors | %{
-    [void] ($VerboseVariableVariable.Value).Add($_)
-}
-'@
-
-        $script3 = @'
-
-$event.Errors | %{
-    if ($_.Class -le 10) {
-        "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
-    } else {
-        # Should be Write-Error but it doesn't seem to trigger properly (after -FireInfoMessageEventOnUserErrors) and so it would otherwise up getting lost
-        "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
-    }
-}
-'@
-
-        if ($VerboseVariable) {
-            $VerboseVariableScript = (@($script1, $script2, $script3) -join [Environment]::Newline) -replace "VariableName", $VerboseVariable
-        } else {
-            $VerboseVariableScript = (@($script1, $script3) -join [Environment]::Newline)
-        }
-        Write-Debug $VerboseVariableScript
-
-        $Connection.add_InfoMessage([ScriptBlock]::Create($VerboseVariableScript))        
 
         # Return the command
         $sqlCommand
