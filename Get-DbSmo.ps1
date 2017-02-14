@@ -1,21 +1,40 @@
 ﻿<#
 
 .SYNOPSIS
+Creates an SQL Server SMO Server object for a database engine instance.
 
 .DESCRIPTION
+While it's easy to instantiate a connection to SQL Server SMO it has a few bugs that require extra workarounds.
 
-.PARAMETER
+* It doesn't provide a simple interface to set a timeout.
+* It has a bug which prevent DefaultInitFields from being set to retrieve and cache all fields (without a specific exception it will cause failures on some database properties).
+* It can return an object even if the server is not up.
+* And even then the object can silently swallow errors and return blank fields if the server is not up.
 
+This wrapper gets around each of these faults, the last of which by connecting and disconnecting, which keeps a connection alive in the pool, but closed so it doesn't require further management. Testing shows that this is sufficient to cause the object to flag errors on dead servers.
+
+.PARAMETER ServerInstance
+A server instance to connect to, for example ".\SQL2016"
+
+.PARAMETER Preload
+Cache all possible data in a minimum of reads.
+
+.PARAMETER PreloadAg
+Only cache Availability Group data (otherwise this is extremely chatty).
+ 
 .INPUTS
+A server instance name.
 
 .OUTPUTS
+An SMO Server object.
 
 .EXAMPLE
+$smo = Get-DbSmo ".\SQL2016" -Preload
 
 #>
 
 function Get-DbSmo {
-    [CmdletBinding(DefaultParameterSetName)]
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string] $ServerInstance,

@@ -21,13 +21,13 @@ GUID = '64e7d769-fed6-4ef8-9ae3-c65411af7e89'
 Author = 'Cody Konior'
 
 # Company or vendor of this module
-CompanyName = 'Cody Konior'
+CompanyName = ''
 
 # Copyright statement for this module
 Copyright = '(c) 2015 Cody Konior. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'Improves SQL Server SMO and querying/updating with PowerShell'
 
 # Minimum version of the Windows PowerShell engine required by this module
 # PowerShellVersion = ''
@@ -67,7 +67,7 @@ RequiredModules = @('Error')
 
 # Functions to export from this module
 FunctionsToExport = @(
-	'Enter-DbTransaction', 
+	'Enter-DbTransaction',
 	'Exit-DbTransaction', 
 	'Get-DbData', 
     'Get-DbSmo',

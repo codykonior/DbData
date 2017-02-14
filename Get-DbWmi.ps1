@@ -1,21 +1,27 @@
 ﻿<#
 
 .SYNOPSIS
+Creates a SQL Server SMO ManagedComputer object for a server.
 
 .DESCRIPTION
+Essentially a shortcut for a long object name. These objects can be used to inspect SQL Server related services and their settings.
 
-.PARAMETER
+.PARAMETER ComputerName
+A computer name.
 
 .INPUTS
+A computer name.
 
 .OUTPUTS
+A ManagedComputer object.
 
 .EXAMPLE
+$wmi = Get-DbWmi .
 
 #>
 
 function Get-DbWmi {
-    [CmdletBinding(DefaultParameterSetName)]
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string] $ComputerName
@@ -26,7 +32,6 @@ function Get-DbWmi {
 
     process {
         $wmi = New-Object Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer($ComputerName)
-
         $wmi
     }
 
