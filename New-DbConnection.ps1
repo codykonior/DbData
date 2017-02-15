@@ -1,18 +1,18 @@
 <#
 
 .SYNOPSIS
-Create an SQL Server connection string using the underlying .NET builder class.
+Create an SQL Server connection using the underlying .NET builder class.
 
 .DESCRIPTION
-A simplified and safer way of creating a dynamic connection string instead of trying to remember all of the different components.
+This is a safer way of getting a connection string than joining them together manually.
 
-There is far more possible options than are provided here.
+There are a lot more options than provided here, it's just what's common.
 
 .PARAMETER ServerInstance
-Specify as ServerName\Instance.
+Specified as ServerName\Instance.
 
 .PARAMETER DatabaseName
-The database name if required. Defaults to no database, but it's strongly recommended you use something (at least master) so that connection pooling can be used automatically.
+The database name if required. It defaults to no database but it's strongly recommended you use something (at least master) so that connection pooling can be used automatically.
 
 .PARAMETER UserName
 If specified SQL Authentication will be used.
@@ -36,7 +36,7 @@ The number of seconds to wait before timing out the connection.
 A switch to enable this functionality which is required for Entity Framework (but not LINQ to SQL).
 
 .PARAMETER MultiSubnetFailover
-For High Availability scenarios connections will be concurrently attempted on multiple IPs returned by the server part of the ServerInstance name.
+For High Availability scenarios connections will be concurrently attempted on multiple IPs concurrently.
 
 .INPUTS
 None. You cannot pipe objects.
@@ -45,20 +45,20 @@ None. You cannot pipe objects.
 A connection string.
 
 .EXAMPLE
-Connect to a remote server.
+$serverInstance = ".\SQL2016"
+New-DbConnection $serverInstance master
 
-$serverInstance = "AGL1"
-New-DbConnection $serverInstance
+Connect to a local server. Returns:
 
-# Data Source=AG1L;Integrated Security=True
+# Data Source=.\SQL2016;Initial Catalog=master;Integrated Security=True
 
 .EXAMPLE
-Connect to a remote server with a username and password.
-    
-$serverInstance = "AGL1"
-New-DbConnection $serverInstance Northwind some_user unsafe_password
+$serverInstance = ".\SQL2016"
+New-DbConnection $serverInstance master some_user unsafe_password
 
-# Data Source=AGL1;Initial Catalog=Northwind;Integrated Security=False;User ID=some_user;Password=unsafe_password
+Connect to a server with a username and password. There are better ways to do this.
+
+# Data Source=.\SQL2016;Initial Catalog=master;Integrated Security=False;User ID=some_user;Password=unsafe_password
 
 #>
 
@@ -74,6 +74,7 @@ function New-DbConnection {
 
 		$UserName,
 		$Password,
+        $SqlCredential,
 
 		$ApplicationName,
 		[System.Data.SqlClient.ApplicationIntent] $ApplicationIntent,
@@ -82,13 +83,15 @@ function New-DbConnection {
         [switch] $Pooling,
         [int] $ConnectTimeout,
         [switch] $MultipleActiveResultSets,
-		[switch] $MultiSubnetFailover
+		[switch] $MultiSubnetFailover,
+
+        [switch] $AsString = $true
 	)
 
-    Begin {
+    begin {
     }
 
-    Process {
+    process {
 	    $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
 
 	    $connectionBuilder."Data Source" = $ServerInstance
@@ -97,9 +100,12 @@ function New-DbConnection {
 	    }
         if ($UserName){
 		    $connectionBuilder."Integrated Security" = $false
-		    $connectionBuilder."User ID" = $UserName
-		    $connectionBuilder."Password" = $Password
-	    } else {
+
+            $connectionBuilder."User ID" = $UserName
+    		$connectionBuilder."Password" = $Password
+	    } elseif ($SqlCredential) {
+		    $connectionBuilder."Integrated Security" = $false
+        } else {
 		    $connectionBuilder."Integrated Security" = $true
 	    }
 	    if ($ApplicationIntent) {
@@ -124,9 +130,17 @@ function New-DbConnection {
 		    $connectionBuilder."MultiSubnetFailover" = $MultiSubnetFailover
 	    } 
 
-	    $connectionBuilder.ConnectionString
+        if ($AsString) {
+            $connectionBuilder.ConnectionString
+        } else {
+            $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
+            if ($sqlCredential) {
+                $sqlConnection.SqlCredential = $SqlCredential
+            }
+            $sqlConnection
+        }
     } 
 
-    End {
+    end {
     }
 } 
