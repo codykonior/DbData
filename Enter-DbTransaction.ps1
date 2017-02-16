@@ -1,16 +1,19 @@
 <#
 
 .SYNOPSIS
-Enter an SQL Transaction.
+Enter a SQL Transaction.
 
 .DESCRIPTION
-Enter an SQL Transaction.
+Enter a SQL Transaction.
 
-.PARAMETER SqlObject.
-An SqlCommand with an SqlConnection, or the output of Get-DbData.
+.PARAMETER InputObject
+A SqlCommand with a SqlConnection, or the output of Get-DbData.
 
 .PARAMETER TransactionName
 An optional name for the transaction.
+
+.PARAMETER PassThru
+Pass the transaction on in the pipeline for further operations.
 
 .INPUTS
 Pipe in the output of New-DbCommand or Get-DbData.
@@ -19,14 +22,17 @@ Pipe in the output of New-DbCommand or Get-DbData.
 (Optionally) Whatever was piped in.
 
 .EXAMPLE
-Begin a transaction and show the transaction count increased. Then rollback and show the transaction count decreased.
-
-Import-Module DbData
-$serverInstance = "AG1L"
-$sql = New-DbConnection $serverInstance | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC" -PassThru
-$sql.ExecuteScalar()
+$serverInstance = ".\SQL2016"
+$sql = New-DbConnection $serverInstance master | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC" -PassThru
+$sql | Get-DbData -OutputAs Scalar
 $sql | Exit-DbTransaction -Rollback
-$sql.ExecuteScalar()
+$sql | Get-DbData -OutputAs Scalar
+
+Results:
+1
+0
+
+Begin a transaction and show the transaction count increased. Then rollback and show the transaction count decreased.
 
 #>
 
@@ -34,7 +40,9 @@ function Enter-DbTransaction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        $SqlObject,
+        [Alias("SqlTransaction")]
+        [Alias("SqlCommand")]
+        $InputObject,
         [Parameter(Position = 0)]
         [string] $TransactionName,
         [System.Data.IsolationLevel] $IsolationLevel,
@@ -45,18 +53,18 @@ function Enter-DbTransaction {
     }
 
     process {
-        if ($SqlObject -is [System.Data.SqlClient.SqlCommand]) {
-            $sqlCommand = $SqlObject
-        } elseif ($SqlObject -is [System.Data.DataTable]) {
-            $sqlCommand = $SqlObject.SqlDataAdapter.SelectCommand
-        } elseif ($SqlObject -is [System.Data.DataSet]) {
-            $sqlCommand = $SqlObject.Tables[0].SqlDataAdapter.SelectCommand
+        if ($InputObject -is [System.Data.SqlClient.SqlCommand]) {
+            $sqlCommand = $InputObject
+        } elseif ($InputObject -is [System.Data.DataTable]) {
+            $sqlCommand = $InputObject.SqlDataAdapter.SelectCommand
+        } elseif ($InputObject -is [System.Data.DataSet]) {
+            $sqlCommand = $InputObject.Tables[0].SqlDataAdapter.SelectCommand
         } else {
-            Write-Error "SqlObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
+            Write-Error "InputObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
         }
 
         if (!$sqlCommand.Connection) {
-            Write-Error "SqlObject requires a valid associated SqlConnection before a transaction can be started."
+            Write-Error "InputObject requires a valid associated SqlConnection before a transaction can be started."
         }
         
         if ($sqlCommand.Connection.State -ne "Open") {
@@ -71,7 +79,7 @@ function Enter-DbTransaction {
         }
 
         if ($PassThru) {
-            $SqlObject
+            $InputObject
         }
     }
 

@@ -12,7 +12,10 @@
 RootModule = 'DbData.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0'
+ModuleVersion = '1.0.0.1'
+
+# Supported PSEditions
+# CompatiblePSEditions = @()
 
 # ID used to uniquely identify this module
 GUID = '64e7d769-fed6-4ef8-9ae3-c65411af7e89'
@@ -48,7 +51,9 @@ Description = 'Improves SQL Server SMO and querying/updating with PowerShell'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @('Error')
+RequiredModules = @(
+    'Error'
+    )
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -78,13 +83,16 @@ FunctionsToExport = @(
 	'Use-DbRetry')
 
 # Cmdlets to export from this module
-CmdletsToExport = '*'
+CmdletsToExport = @()
 
 # Variables to export from this module
 VariablesToExport = '*'
 
 # Aliases to export from this module
-AliasesToExport = '*'
+AliasesToExport = @()
+
+# DSC resources to export from this module
+# DscResourcesToExport = @()
 
 # List of all modules packaged with this module
 # ModuleList = @()
@@ -92,8 +100,29 @@ AliasesToExport = '*'
 # List of all files packaged with this module
 # FileList = @()
 
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-# PrivateData = ''
+# Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+PrivateData = @{
+
+    PSData = @{
+
+        # Tags applied to this module. These help with module discovery in online galleries.
+        # Tags = @()
+
+        # A URL to the license for this module.
+        # LicenseUri = ''
+
+        # A URL to the main website for this project.
+        # ProjectUri = ''
+
+        # A URL to an icon representing this module.
+        # IconUri = ''
+
+        # ReleaseNotes of this module
+        # ReleaseNotes = ''
+
+    } # End of PSData hashtable
+
+} # End of PrivateData hashtable
 
 # HelpInfo URI of this module
 # HelpInfoURI = ''
@@ -102,4 +131,4 @@ AliasesToExport = '*'
 # DefaultCommandPrefix = ''
 
 }
-
+

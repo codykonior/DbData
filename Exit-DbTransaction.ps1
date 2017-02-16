@@ -6,11 +6,8 @@ Exit a SQL transaction.
 .DESCRIPTION
 Commit or rollback a SQL transaction.
 
-.PARAMETER SqlObject
-A SqlCommand with a SqlConnection and SqlTransaction. This can be extracted
-from a DataTable or a DataSet, but not a DataRow.
-
-If the DataSet has multiple tables only the first one is used.
+.PARAMETER InputObject
+A SqlCommand with a SqlConnection and SqlTransaction. This can be extracted from a DataTable or a DataSet, but not a DataRow.
 
 .PARAMETER Commit
 Commit the transaction.
@@ -18,25 +15,30 @@ Commit the transaction.
 .PARAMETER Rollback
 Rollback the transaction.
 
+.PARAMETER PassThru
+Pass the transaction on in the pipeline for further operations.
+
 .INPUTS
-Pipe in SqlCommand or a DataSet. You cannot pipe in a DataTable because it
-will be enumerated into DataRows.
+Pipe in SqlCommand or a DataSet. You cannot pipe in a DataTable because it will be enumerated into DataRows.
 
 .OUTPUTS
-(Optional) Input.
+(Optionally) Whatever was piped in.
 
 .EXAMPLE
-Show a transaction being created and destroyed.
-
-Import-Module DbData
-$serverInstance = "AG1L"
+$serverInstance = ".\SQL2016"
 $dbData = New-DbConnection $serverInstance | New-DbCommand "Select @@Trancount"
-$dbData.Connection.Open()
-$dbData.ExecuteScalar()
+$dbData | Get-DbData -OutputAs Scalar
 $dbData | Enter-DbTransaction "ABC"
-$dbData.ExecuteScalar()
+$dbData | Get-DbData -OutputAs Scalar
 $dbData | Exit-DbTransaction -Commit
-$dbData.ExecuteScalar()
+$dbData | Get-DbData -OutputAs Scalar
+
+Results:
+0
+1
+0
+
+Show the transaction count, begin a transaction and show the transaction count increased. Then rollback and show the transaction count decreased.
 
 #>
 
@@ -44,7 +46,9 @@ function Exit-DbTransaction {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        $SqlObject,
+        [Alias("SqlTransaction")]
+        [Alias("SqlCommand")]
+        $InputObject,
 
         [switch] $Commit,
         [switch] $Rollback,
@@ -56,14 +60,14 @@ function Exit-DbTransaction {
     }
 
     process {
-        if ($SqlObject -is [System.Data.SqlClient.SqlCommand]) {
-            $sqlCommand = $SqlObject
-        } elseif ($SqlObject -is [System.Data.DataTable]) {
-            $sqlCommand = $SqlObject.SqlDataAdapter.SelectCommand
-        } elseif ($SqlObject -is [System.Data.DataSet]) {
-            $sqlCommand = $SqlObject.Tables[0].SqlDataAdapter.SelectCommand
+        if ($InputObject -is [System.Data.SqlClient.SqlCommand]) {
+            $sqlCommand = $InputObject
+        } elseif ($InputObject -is [System.Data.DataTable]) {
+            $sqlCommand = $InputObject.SqlDataAdapter.SelectCommand
+        } elseif ($InputObject -is [System.Data.DataSet]) {
+            $sqlCommand = $InputObject.Tables[0].SqlDataAdapter.SelectCommand
         } else {
-            Write-Error "SqlObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
+            Write-Error "InputObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
         }
 
         if (!$sqlCommand.Connection) {
@@ -81,7 +85,7 @@ function Exit-DbTransaction {
         }
 
         if ($passThru) {
-            $SqlObject
+            $InputObject
         }
     }
 
