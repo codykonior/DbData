@@ -25,6 +25,9 @@ For some simple operations, where no editing is required, you might want to skip
 .PARAMETER NoCommandBuild
 For some simple operations, where no editing is required, you might want to skip command building.
 
+.PARAMETER InfoMessageVariable
+An object of System.Collections.ArrayList which will be appended with all info message objects received while running the command, in addition to formatted versions written to the verbose stream.
+
 .INPUTS
 Pipe in an SqlCommand like from New-DbCommand.
 
@@ -41,16 +44,33 @@ $dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
 $dbData.Alter(@{ A = 4; B = "D" }) | Out-Null
 
 Results:
-
-  A B
-  - -
-100 C
-101 B
-102 D
+      A B
+      - -
+    100 C
+    101 B
+    102 D
 
 This drops and creates a dummy table with an identity column seeding at 100. It then inserts two rows, updates the first row, then attempts a fixed identity insert.
 
 The result is three rows, with the special identity of the last column discarded (but the properly allocated identity value returned).
+
+.EXAMPLE
+$serverInstance = ".\SQL2016"
+$infoMessage = New-Object System.Collections.ArrayList
+New-DbConnection $serverInstance master | New-DbCommand "Print 'Moo';" | Get-DbData -OutputAs NonQuery -InfoMessageVariable $infoMessage | Out-Null
+$infoMessage
+
+Results:
+    Source     : .Net SqlClient Data Provider
+    Number     : 0
+    State      : 1
+    Class      : 0
+    Server     : .\SQL2016
+    Message    : Moo
+    Procedure  : 
+    LineNumber : 1
+
+Stores objects from the message stream into a variable (which is overwritten).
 
 #>
 
@@ -67,7 +87,7 @@ function Get-DbData {
         [switch] $NoSchema,
         [switch] $NoCommandBuilder,
 
-        $infoMessageOutput = (New-Object Collections.ArrayList)
+        $InfoMessageVariable = (New-Object Collections.ArrayList)
     )
 
     begin {
@@ -78,7 +98,7 @@ function Get-DbData {
             # Write-Error has been substituted for Write-Verbose here because otherwise it gets lost
             try {
                 $_ | Select-Object -ExpandProperty Errors | ForEach-Object {
-                    [void] $infoMessageOutput.Add($_)
+                    [void] $InfoMessageVariable.Add($_)                    
 
                     if ($_.Class -le 10) {
                         "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
@@ -88,7 +108,7 @@ function Get-DbData {
                     }
                 }
             } catch {
-                $_ | Write-Verbose
+                "InfoMessage script error: $_" | Write-Verbose
             }
         }.GetNewClosure()
 
@@ -167,7 +187,7 @@ function Get-DbData {
     }
 
     process {
-        $infoMessageOutput = New-Object Collections.ArrayList
+        $InfoMessageVariable = New-Object Collections.ArrayList
         $SqlCommand.Connection.add_InfoMessage($infoMessageScript)
 
         try {
@@ -200,8 +220,7 @@ function Get-DbData {
                         try {
                             [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
                         } catch {
-                            # Swallow. We can't write it verbosely because verbose is used for print statements.
-                            # Write-Verbose "You can't edit this data: $_"
+                            Write-Verbose "Couldn't retrieve schema data $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
                     }
                     
@@ -225,7 +244,7 @@ function Get-DbData {
                             }
                         } catch { 
                             # Swallow. We can't write it verbosely because verbose is used for print statements.
-                            # Write-Verbose "You can't edit this data: $_"
+                            Write-Verbose "Couldn't build command for $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
                         
                         if ($sqlDataAdapter.InsertCommand -or $sqlDataAdapter.UpdateCommand -or $sqlDataAdapter.DeleteCommand) {

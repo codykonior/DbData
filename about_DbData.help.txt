@@ -11,7 +11,8 @@ LONG DESCRIPTION
 
     * Safely build connection strings and connections
     * Construct commands with really injection-safe parameters
-    * Execute statements, stored procedure, etc
+    * Execute statements, stored procedure, etc, while retaining full message
+      output (to the verbose stream and an optional arraylist variable)
     * Read, and alter, table data
     * Bulk copy tables
     * Optionally use SQL transactions
