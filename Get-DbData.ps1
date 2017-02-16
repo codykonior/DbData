@@ -42,6 +42,7 @@ $dbData.Alter(@{ B = "A" }) | Out-Null
 $dbData.Alter(@{ B = "B" }) | Out-Null
 $dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
 $dbData.Alter(@{ A = 4; B = "D" }) | Out-Null
+$dbData
 
 Results:
       A B
@@ -182,12 +183,11 @@ function Get-DbData {
                 }
             }
 
-            $this.SqlDataAdapter.Update($this)
+            $sqlDataAdapter.Update($this)
         }
     }
 
     process {
-        $InfoMessageVariable = New-Object Collections.ArrayList
         $SqlCommand.Connection.add_InfoMessage($infoMessageScript)
 
         try {
@@ -249,8 +249,7 @@ function Get-DbData {
                         
                         if ($sqlDataAdapter.InsertCommand -or $sqlDataAdapter.UpdateCommand -or $sqlDataAdapter.DeleteCommand) {
                             # Store a link to the data adapter against the first table along with the alter script
-                            Add-Member -InputObject $dataSet.Tables[0] -MemberType NoteProperty -Name SqlDataAdapter -Value $sqlDataAdapter
-                            Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript
+                            Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript.GetNewClosure()
                         }
                     }
                 }
