@@ -26,7 +26,7 @@ New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo',
 $dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" | Enter-DbTransaction -PassThru | Get-DbData -OutputAs DataTables
 $dbData.Alter(@{ A = 1; B = "B" })
 try {
-    $dbData2 = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | %{
+    $dbData2 = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | ForEach {
         Use-DbRetry { Get-DbData $_ } -Verbose
     }
 } catch {
