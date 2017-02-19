@@ -28,6 +28,9 @@ For some simple operations, where no editing is required, you might want to skip
 .PARAMETER InfoMessageVariable
 An object of System.Collections.ArrayList which will be appended with all info message objects received while running the command, in addition to formatted versions written to the verbose stream.
 
+.PARAMETER CollectionJoin
+A character to join any non-string collections that are passed in when calling .Alter() on a table. For example, for joining @() and ArrayList. Empty collections are converted to DBNull.
+
 .INPUTS
 Pipe in an SqlCommand like from New-DbCommand.
 
@@ -38,22 +41,34 @@ See the OutputAs parameter.
 $serverInstance = ".\SQL2016"
 New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -OutputAs NonQuery | Out-Null
 $dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -OutputAs DataTables
-$dbData.Alter(@{ B = "A" }) | Out-Null
-$dbData.Alter(@{ B = "B" }) | Out-Null
-$dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
-$dbData.Alter(@{ A = 4; B = "D" }) | Out-Null
-$dbData
+$dbData.Alter(@{ B = "AAA" }) | Out-Null
+$dbData.Alter(@{ B = @("AAA", "BBB", "CCC") }) | Out-Null
+$dbData.Alter(@{ B = @(000, 001, 002) }) | Out-Null
+$dbData.Alter(@{ B = @() }) | Out-Null
+$dbData.Alter(@{ A = 100; B = "CCC" }) | Out-Null
+$dbData.Alter(@{ A = 4; B = "DDD" }) | Out-Null
+$dbData | Format-List
 
 Results:
-      A B
-      - -
-    100 C
-    101 B
-    102 D
+    A : 100
+    B : CCC
 
-This drops and creates a dummy table with an identity column seeding at 100. It then inserts two rows, updates the first row, then attempts a fixed identity insert.
+    A : 101
+    B : AAA
+        BBB
+        CCC
 
-The result is three rows, with the special identity of the last column discarded (but the properly allocated identity value returned).
+    A : 102
+    B : 0
+        1
+        2
+
+    A : 103
+    B : DDD
+
+This drops and creates a dummy table with an identity column seeding at 100. It then inserts a row, two array (collection) rows, updates the first row, then attempts a fixed identity insert.
+
+The result is four rows, with the collections concatenated, and the special identity of the last column discarded (but the properly allocated identity value returned).
 
 .EXAMPLE
 $serverInstance = ".\SQL2016"
@@ -73,6 +88,9 @@ Results:
 
 Stores objects from the message stream into a variable (which is overwritten).
 
+.NOTES
+Be careful about supplying additional columns which are not in the destination table. These are ignored.
+
 #>
 
 function Get-DbData {
@@ -87,8 +105,9 @@ function Get-DbData {
 
         [switch] $NoSchema,
         [switch] $NoCommandBuilder,
+        $InfoMessageVariable = (New-Object Collections.ArrayList),
 
-        $InfoMessageVariable = (New-Object Collections.ArrayList)
+        $CollectionJoin = [Environment]::NewLine
     )
 
     begin {
@@ -120,32 +139,35 @@ function Get-DbData {
             param (
                 $DataRows
             )
+            Set-StrictMode -Version Latest
+            $ErrorActionPreference = "Stop"
+
             # Process multiple rows one at a time
             foreach ($row in $DataRows) {
                 $table = $this
             
                 # Get the incoming column names
                 if ($row -is [System.Data.DataRow]) {
-                    $rowName = $row.Table.Columns | Select-Object -ExpandProperty ColumnName
+                    $rowColumnNames = $row.Table.Columns | Select-Object -ExpandProperty ColumnName
                 } elseif ($row -is [Hashtable]) {
-                    $rowName = $row.Keys
+                    $rowColumnNames = $row.Keys
                 } elseif ($row -is [PSObject]) {
                     $newRow = @{}
                     $row.psobject.Properties | ForEach-Object {
                         $newRow.Add($_.Name, $_.Value)
                     }
                     $row = $newRow
-                    $rowName = $row.Keys
+                    $rowColumnNames = $row.Keys
                 } else {
                     Write-Error "Unknown row type of $($row.GetType().FullName)"
                 }
 
-                # Get the primary key names and values, if any
+                # Get the primary key column names and values, if any
                 $pkName = $table.PrimaryKey | Select-Object -ExpandProperty ColumnName
 
                 $pkValue = New-Object Collections.ArrayList
                 foreach ($name in $pkName) {
-                    if ($rowName -contains $name) {
+                    if ($rowColumnNames -contains $name) {
                         [void] $pkValue.Add($row[$name])
                     } else {
                         $pkValue = $null
@@ -153,29 +175,41 @@ function Get-DbData {
                     }
                 }
 
-                if ($pkValue) {
-                    $newRow = $table.Rows.Find($pkValue.ToArray())
-                } else {
-                    $newRow = $null
-                }
-
-                if ($newRow) {
-                    foreach ($property in ($rowName | Where-Object { $pkName -notcontains $_ })) {
-                        if ($newRow[$property] -ne $row[$property]) {
-                            if ($null -ne $row[$property]) {
-                                $newRow[$property] = $row[$property]
-                            } else {
+                if ($pkValue -and ($existingRow = $table.Rows.Find($pkValue.ToArray()))) {
+                    $newRow = $existingRow
+                    # Get properties which are not part of the primary key (as those can't be changed)
+                    foreach ($property in ($rowColumnNames | Where-Object { $pkName -notcontains $_ })) {
+                        if ($row[$property] -is [System.Collections.ICollection]) {
+                            $propertyNull = $row[$property].Count -eq 0
+                            $propertyValue = $row[$property] -join $CollectionJoin
+                        } else {
+                            $propertyNull = $row[$property] -eq $null
+                            $propertyValue = $row[$property]
+                        }
+                        
+                        if ($newRow[$property] -ne $propertyValue) {
+                            if ($propertyNull) {
                                 $newRow[$property] = [DBNull]::Value
+                            } else {
+                                $newRow[$property] = $propertyValue
                             }
                         }
                     }
                 } else {
                     $newRow = $table.NewRow()
-                    foreach ($property in $rowName) {
-                        if ($null -ne $row[$property]) {
-                            $newRow[$property] = $row[$property]
+                    foreach ($property in $rowColumnNames) {
+                        if ($row[$property] -is [System.Collections.ICollection]) {
+                            $propertyNull = $row[$property].Count -eq 0
+                            $propertyValue = $row[$property] -join $CollectionJoin
                         } else {
+                            $propertyNull = $row[$property] -eq $null
+                            $propertyValue = $row[$property]
+                        }
+                        
+                        if ($propertyNull) {
                             $newRow[$property] = [DBNull]::Value
+                        } else {
+                            $newRow[$property] = $propertyValue
                         }
                     }
 
