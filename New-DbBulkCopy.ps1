@@ -29,13 +29,13 @@ Pipe in the output of Get-DbData or similar.
 
 .EXAMPLE
 $serverInstance = ".\SQL2016"
-New-DbConnection $serverInstance | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -OutputAs NonQuery | Out-Null
-$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -OutputAs DataTables -TableMapping @("Moo")
+New-DbConnection $serverInstance | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -As NonQuery | Out-Null
+$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTables -TableMapping @("Moo")
 $dbData.Alter(@{ B = "A" }) | Out-Null
 $dbData.Alter(@{ B = "B" }) | Out-Null
 $dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
 $dbData.Alter(@{ B = "D" }) | Out-Null
-New-DbConnection $serverInstance | New-DbCommand "Truncate Table dbo.Moo;" | Get-DbData -OutputAs NonQuery | Out-Null
+New-DbConnection $serverInstance | New-DbCommand "Truncate Table dbo.Moo;" | Get-DbData -As NonQuery | Out-Null
 New-DbConnection $serverInstance | New-DbBulkCopy -Data $dbData -Option "KeepIdentity"
 New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-DbData
 

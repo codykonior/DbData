@@ -39,8 +39,8 @@ See the OutputAs parameter.
 
 .EXAMPLE
 $serverInstance = ".\SQL2016"
-New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -OutputAs NonQuery | Out-Null
-$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -OutputAs DataTables
+New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -As NonQuery | Out-Null
+$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTables
 $dbData.Alter(@{ B = "AAA" }) | Out-Null
 $dbData.Alter(@{ B = @("AAA", "BBB", "CCC") }) | Out-Null
 $dbData.Alter(@{ B = @(000, 001, 002) }) | Out-Null
@@ -73,7 +73,7 @@ The result is four rows, with the collections concatenated, and the special iden
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 $infoMessage = New-Object System.Collections.ArrayList
-New-DbConnection $serverInstance master | New-DbCommand "Print 'Moo';" | Get-DbData -OutputAs NonQuery -InfoMessageVariable $infoMessage | Out-Null
+New-DbConnection $serverInstance master | New-DbCommand "Print 'Moo';" | Get-DbData -As NonQuery -InfoMessageVariable $infoMessage | Out-Null
 $infoMessage
 
 Results:
@@ -101,6 +101,7 @@ function Get-DbData {
         [string[]] $TableMapping = @(),
         
         [ValidateSet("NonQuery", "Scalar", "DataRows", "DataSet", "DataTables")]
+        [Alias("As")]
         $OutputAs = "DataRows",
 
         [switch] $NoSchema,

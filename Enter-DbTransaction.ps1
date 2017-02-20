@@ -24,9 +24,9 @@ Pipe in the output of New-DbCommand or Get-DbData.
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 $sql = New-DbConnection $serverInstance master | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC" -PassThru
-$sql | Get-DbData -OutputAs Scalar
+$sql | Get-DbData -As Scalar
 $sql | Exit-DbTransaction -Rollback
-$sql | Get-DbData -OutputAs Scalar
+$sql | Get-DbData -As Scalar
 
 Results:
 1

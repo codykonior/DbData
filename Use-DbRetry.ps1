@@ -23,7 +23,7 @@ Anything output by the scriptblock. But failure information is also written to t
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max));" | Get-DbData
-$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" | Enter-DbTransaction -PassThru | Get-DbData -OutputAs DataTables
+$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" | Enter-DbTransaction -PassThru | Get-DbData -As DataTables
 $dbData.Alter(@{ A = 1; B = "B" })
 try {
     $dbData2 = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | ForEach {

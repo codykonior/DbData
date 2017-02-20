@@ -27,11 +27,11 @@ Pipe in SqlCommand or a DataSet. You cannot pipe in a DataTable because it will 
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 $dbData = New-DbConnection $serverInstance | New-DbCommand "Select @@Trancount"
-$dbData | Get-DbData -OutputAs Scalar
+$dbData | Get-DbData -As Scalar
 $dbData | Enter-DbTransaction "ABC"
-$dbData | Get-DbData -OutputAs Scalar
+$dbData | Get-DbData -As Scalar
 $dbData | Exit-DbTransaction -Commit
-$dbData | Get-DbData -OutputAs Scalar
+$dbData | Get-DbData -As Scalar
 
 Results:
 0
