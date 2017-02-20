@@ -179,7 +179,7 @@ function Get-DbData {
                     $newRow = $existingRow
                     # Get properties which are not part of the primary key (as those can't be changed)
                     foreach ($property in ($rowColumnNames | Where-Object { $pkName -notcontains $_ })) {
-                        if ($row[$property] -is [System.Collections.ICollection]) {
+                        if ($row[$property] -is [System.Collections.ICollection] -and $row[$property] -isnot [byte[]]) {
                             $propertyNull = $row[$property].Count -eq 0
                             $propertyValue = $row[$property] -join $CollectionJoin
                         } else {
@@ -198,7 +198,7 @@ function Get-DbData {
                 } else {
                     $newRow = $table.NewRow()
                     foreach ($property in $rowColumnNames) {
-                        if ($row[$property] -is [System.Collections.ICollection]) {
+                        if ($row[$property] -is [System.Collections.ICollection] -and $row[$property] -isnot [byte[]]) {
                             $propertyNull = $row[$property].Count -eq 0
                             $propertyValue = $row[$property] -join $CollectionJoin
                         } else {
