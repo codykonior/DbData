@@ -12,7 +12,7 @@
 RootModule = 'DbData.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.3.0'
+ModuleVersion = '1.0.3.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -52,6 +52,7 @@ Description = 'Improves SQL Server SMO and querying/updating with PowerShell'
 
 # Modules that must be imported into the global environment prior to importing this module
 RequiredModules = @(
+    'Disposable',
     'Error'
     )
 
