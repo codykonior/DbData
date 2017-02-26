@@ -45,6 +45,9 @@ A switch to enable this functionality which is required for Entity Framework (bu
 .PARAMETER MultiSubnetFailover
 For High Availability scenarios connections will be concurrently attempted on multiple IPs concurrently (but only for Availability Group listeners and Failover Clusters on SQL 2012+). This is not required as of .NET Framework 4.6.1 as it's enabled automatically.
 
+.PARAMETER Open
+Open the connection for you before returning it. Make sure you close it at some stage.
+
 .INPUTS
 None. You cannot pipe objects.
 
@@ -131,7 +134,8 @@ function New-DbConnection {
         $WorkstationID,
 
         $SqlCredential,
-        [switch] $AsString
+        [switch] $AsString,
+        [switch] $Open
 	)
 
     begin {
@@ -259,6 +263,9 @@ function New-DbConnection {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
             if ($sqlCredential) {
                 $sqlConnection.SqlCredential = $SqlCredential
+            }
+            if ($Open) {
+                $sqlConnection.Open()
             }
             $sqlConnection
         }
