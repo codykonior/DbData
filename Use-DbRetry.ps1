@@ -69,7 +69,7 @@ function Use-DbRetry {
                     Write-Verbose "Caught unknown SQL error: $_"
                     throw
                 }
-            } elseif (Test-Error Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException) {
+            } elseif (Test-Error "Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException") {
                 Write-Verbose "Caught SQL policy evaluation error. Retry $try."
                 $try++
             } else {
