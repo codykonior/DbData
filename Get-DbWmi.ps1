@@ -28,6 +28,7 @@ function Get-DbWmi {
     )
 
     begin {
+        [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo")
     }
 
     process {
