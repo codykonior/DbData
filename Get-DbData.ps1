@@ -190,7 +190,9 @@ function Get-DbData {
                         
                         if ($newRow[$property] -ne $propertyValue) {
                             if ($propertyNull) {
-                                $newRow[$property] = [DBNull]::Value
+                                if ($newRow[$property] -ne [DBNull]::Value) {
+                                    $newRow[$property] = [DBNull]::Value
+                                }
                             } else {
                                 $newRow[$property] = $propertyValue
                             }
@@ -208,7 +210,9 @@ function Get-DbData {
                         }
                         
                         if ($propertyNull) {
-                            $newRow[$property] = [DBNull]::Value
+                            if ($newRow[$property] -ne [DBNull]::Value) {
+                                $newRow[$property] = [DBNull]::Value
+                            }
                         } else {
                             $newRow[$property] = $propertyValue
                         }
