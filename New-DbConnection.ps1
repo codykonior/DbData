@@ -261,8 +261,10 @@ function New-DbConnection {
             $connectionBuilder.ConnectionString
         } else {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
+			Add-DbOpen $sqlConnection
+ 
             if ($sqlCredential) {
-                $sqlConnection.SqlCredential = $SqlCredential
+                $sqlConnection.Credential = $SqlCredential
             }
             if ($Open) {
                 $sqlConnection.Open()
