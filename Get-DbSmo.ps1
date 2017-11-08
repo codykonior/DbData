@@ -34,10 +34,13 @@ $smo = Get-DbSmo ".\SQL2016" -Preload
 #>
 
 function Get-DbSmo {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = "ServerInstance")]
     param (
-        [Parameter(Mandatory = $true)]
-        [string] $ServerInstance,
+        [Parameter(Mandatory = $true, ParameterSetName = "ServerInstance", Position = 0)]
+		$ServerInstance,
+        [Parameter(ParameterSetName = "ConnectionString")]
+        $ConnectionString,
+
         [switch] $Preload,
         [switch] $PreloadAg
     )
@@ -47,10 +50,18 @@ function Get-DbSmo {
     }
 
     process {
-        Use-DbRetry {
-            $connection = New-Object Microsoft.SqlServer.Management.Common.SqlConnectionInfo($ServerInstance)
-            $connection.ConnectionTimeout = 60
-            $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
+		Use-DbRetry {
+			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
+	        $connection.ConnectTimeout = 60
+
+			if ($PSCmdlet.ParameterSetName -eq "ConnectionString") {
+				$connection.ConnectionString = $ConnectionString
+			} else {
+				$connection.ServerInstance = $ServerInstance
+			}
+			Add-DbOpen $connection.SqlConnectionObject
+
+			$smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 
             if ($Preload) {
                 $smo.SetDefaultInitFields($true)
@@ -62,9 +73,12 @@ function Get-DbSmo {
             }
 
             $smo.ConnectionContext.Connect() # Get ready
+			if (!$smo.ComputerNamePhysicalNetBIOS) {
+				throw (New-Object System.Data.DataException("SMO connection silently failed"))
+			}
             $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it
             $smo
-        }
+		}
     }
 
     end {
