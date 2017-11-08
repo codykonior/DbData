@@ -12,7 +12,7 @@
 RootModule = 'DbData.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.4.0.3'
+ModuleVersion = '1.4.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -81,7 +81,9 @@ FunctionsToExport = @(
 	'New-DbCommand', 
 	'New-DbConnection', 
     'New-DbBulkCopy',
-	'Use-DbRetry')
+	'Use-DbRetry',
+	'Add-DbOpen'
+	)
 
 # Cmdlets to export from this module
 CmdletsToExport = @()
