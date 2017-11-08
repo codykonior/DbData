@@ -26,7 +26,7 @@ New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo',
 $dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" | Enter-DbTransaction -PassThru | Get-DbData -As DataTables
 $dbData.Alter(@{ A = 1; B = "B" })
 try {
-    $dbData2 = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | ForEach {
+    $dbData2 = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo" -CommandTimeout 2 | ForEach-Object {
         Use-DbRetry { Get-DbData $_ } -Verbose
     }
 } catch {
@@ -58,29 +58,44 @@ function Use-DbRetry {
             . $Script
             break
         } catch {
-            if (Test-Error -Type System.Data.SqlClient.SqlException) {
+            if (Test-Error -TypeName "Microsoft.SqlServer.Management.Common.ConnectionFailureException") {
+                Write-Host "Caught ConnectionFailureException. Try $try."
+                $try++
+            } elseif (Test-Error @{ Message = "SMO connection silently failed" }) {
+                Write-Host "Caught silent ConnectionFailureException. Retry $try."
+                $try++
+            } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlException") {
                 if (Test-Error @{ Number = 1205 }) {
-                    Write-Verbose "Caught SQL deadlock. Try $try."
+                    Write-Host "Caught SqlException deadlock. Try $try."
                     $try++
                 } elseif (Test-Error @{ Number = -2 }) {
-                    Write-Verbose "Caught SQL timeout. Try $try."
+                    Write-Host "Caught SqlException timeout. Try $try."
                     $try++
                 } else {
-                    Write-Verbose "Caught unknown SQL error: $_"
-                    throw
+                    Write-Error "Caught SqlException unknown error: $_"
                 }
-            } elseif (Test-Error "Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException") {
-                Write-Verbose "Caught SQL policy evaluation error. Retry $try."
+            } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlError") {
+                if (Test-Error @{ Number = 10054 }) {
+                    Write-Host "Caught SqlError connection error. Try $try."
+                    $try++
+                } else {
+                    Write-Error "Caught SqlError unknown error: $_"
+                }
+            } elseif (Test-Error -TypeName "System.Data.DBConcurrencyException") {
+                Write-Host "Caught ADO.NET concurrency error. Retry $try."
+                $try++
+            } elseif (Test-Error -TypeName "Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException") {
+                Write-Host "Caught SQL policy evaluation error. Retry $try."
                 $try++
             } else {
-                Write-Verbose "Caught unknown non-SQL error: $_"
-                throw
+                Write-Error "Caught unknown non-SQL error: $_"
+                $try++
             }
 
             if ($try -gt $Tries) {
                 throw
             } else {
-                Start-Sleep -Milliseconds (Get-Random 5000) # Somewhere up to 5 seconds
+                Start-Sleep -Milliseconds (Get-Random (1000 * $try)) # Backoff
             }
         } 
     }
