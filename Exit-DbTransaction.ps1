@@ -74,15 +74,16 @@ function Exit-DbTransaction {
             Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
         } 
 
-        if (!$SqlCommand.Transaction) {
-            Write-Error "SqlCommand needs an active transaction before it can be ended."
-        }
+        if ($SqlCommand.Transaction) {
+			if ($Rollback) {
+				$sqlCommand.Transaction.Rollback()
+			} else {
+				$sqlCommand.Transaction.Commit()
+			}
+		} elseif ($Commit) {
+			Write-Error "Cannot commit a transaction as a transaction isn't open in this SqlCommand."
+		} # If a Rollback was requested and it has already been closed we ignore it
 
-        if ($Rollback) {
-            $sqlCommand.Transaction.Rollback()
-        } else {
-            $sqlCommand.Transaction.Commit()
-        }
 
         if ($passThru) {
             $InputObject
