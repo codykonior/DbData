@@ -16,6 +16,12 @@ This wrapper gets around each of these faults, the last of which by connecting a
 .PARAMETER ServerInstance
 A server instance to connect to, for example ".\SQL2016"
 
+.PARAMETER ConnectionString
+A connection string.
+
+.PARAMETER SqlConnection
+A SqlConnection object.
+
 .PARAMETER Preload
 Cache all possible data in a minimum of reads.
 
@@ -23,23 +29,26 @@ Cache all possible data in a minimum of reads.
 Only cache Availability Group data (otherwise this is extremely chatty).
  
 .INPUTS
-A server instance name.
+A server name, a connection string, or a connection object.
 
 .OUTPUTS
 An SMO Server object.
 
 .EXAMPLE
-$smo = Get-DbSmo ".\SQL2016" -Preload
+$smo = Get-DbSmo . -Preload
 
 #>
 
 function Get-DbSmo {
     [CmdletBinding(DefaultParameterSetName = "ServerInstance")]
     param (
-        [Parameter(Mandatory = $true, ParameterSetName = "ServerInstance", Position = 0)]
-		$ServerInstance,
-        [Parameter(ParameterSetName = "ConnectionString")]
-        $ConnectionString,
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ServerInstance", Position = 0)]
+        [Alias("SqlServerName")]
+		[string] $ServerInstance,
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ConnectionString", Position = 0)]
+        [string] $ConnectionString,
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "SqlConnection", Position = 0)]
+        [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
         [switch] $Preload,
         [switch] $PreloadAg
@@ -50,17 +59,26 @@ function Get-DbSmo {
     }
 
     process {
-		Use-DbRetry {
-			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
-	        $connection.ConnectTimeout = 60
+        $parameterSetName = $PSCmdlet.ParameterSetName
 
-			if ($PSCmdlet.ParameterSetName -eq "ConnectionString") {
-				$connection.ConnectionString = $ConnectionString
-			} else {
-				$connection.ServerInstance = $ServerInstance
-			}
+		Use-DbRetry {
+            # ServerConnection can be initialised with a server name, or a sql connection
+            switch ($parameterSetName) {
+                "ServerInstance" {
+        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
+    				$connection.ServerInstance = $ServerInstance
+                }
+                "ConnectionString" {
+        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
+    				$connection.ConnectionString = $ConnectionString
+                }
+                "SqlConnection" {
+        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
+                }
+            }
 			Add-DbOpen $connection.SqlConnectionObject
 
+            # Server can be initialised with either a server nama serverconnection object
 			$smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 
             if ($Preload) {
