@@ -59,33 +59,33 @@ function Use-DbRetry {
             break
         } catch {
             if (Test-Error -TypeName "Microsoft.SqlServer.Management.Common.ConnectionFailureException") {
-                Write-Host "Caught ConnectionFailureException. Try $try."
+                Wrie-Verbose "Caught ConnectionFailureException. Try $try."
                 $try++
             } elseif (Test-Error @{ Message = "SMO connection silently failed" }) {
-                Write-Host "Caught silent ConnectionFailureException. Retry $try."
+                Wrie-Verbose "Caught silent ConnectionFailureException. Retry $try."
                 $try++
             } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlException") {
                 if (Test-Error @{ Number = 1205 }) {
-                    Write-Host "Caught SqlException deadlock. Try $try."
+                    Wrie-Verbose "Caught SqlException deadlock. Try $try."
                     $try++
                 } elseif (Test-Error @{ Number = -2 }) {
-                    Write-Host "Caught SqlException timeout. Try $try."
+                    Wrie-Verbose "Caught SqlException timeout. Try $try."
                     $try++
                 } else {
                     Write-Error "Caught SqlException unknown error: $_"
                 }
             } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlError") {
                 if (Test-Error @{ Number = 10054 }) {
-                    Write-Host "Caught SqlError connection error. Try $try."
+                    Wrie-Verbose "Caught SqlError connection error. Try $try."
                     $try++
                 } else {
                     Write-Error "Caught SqlError unknown error: $_"
                 }
             } elseif (Test-Error -TypeName "System.Data.DBConcurrencyException") {
-                Write-Host "Caught ADO.NET concurrency error. Retry $try."
+                Wrie-Verbose "Caught ADO.NET concurrency error. Retry $try."
                 $try++
             } elseif (Test-Error -TypeName "Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException") {
-                Write-Host "Caught SQL policy evaluation error. Retry $try."
+                Wrie-Verbose "Caught SQL policy evaluation error. Retry $try."
                 $try++
             } else {
                 Write-Error "Caught unknown non-SQL error: $_"

@@ -91,7 +91,7 @@ function Get-DbSmo {
             }
 
             $smo.ConnectionContext.Connect() # Get ready
-			if (!$smo.ComputerNamePhysicalNetBIOS) {
+			if (!$smo.Version) {
 				throw (New-Object System.Data.DataException("SMO connection silently failed"))
 			}
             $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it

@@ -22,7 +22,7 @@ For SQL Authentication. Otherwise Integrated Security is used.
 For SQL Authentication. Otherwise Integrated Security is used.
 
 .PARAMETER SqlCredential
-As of .NET Framework 4.5 the preferred method of passing SQL Authentication credentials is using System.Data.SqlClient.SqlCredential. This is added to the connection object, and so, cannot be used if you are requesting only a connection string.
+As of .NET Framework 4.5 the preferred method of passing SQL Authentication credentials is using System.Data.SqlClient.SqlCredential. PSCredentials will be converted to this automatically. This is added to the connection object, and so, cannot be used if you are requesting only a connection string.
 
 .PARAMETER IntegratedSecurity
 Enabled automatically if no UserID, Password, or SqlCredential is passed in. However you can explicitly set it also.
@@ -263,8 +263,12 @@ function New-DbConnection {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
 			Add-DbOpen $sqlConnection
  
-            if ($sqlCredential) {
-                $sqlConnection.Credential = $SqlCredential
+            if ($SqlCredential) {
+                if ($SqlCredential -is [System.Management.Automation.PSCredential]) {
+                    $SqlCredential.Password.MakeReadOnly()
+                    $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
+                }                
+                $SqlConnection.Credential = $SqlCredential
             }
             if ($Open) {
                 $sqlConnection.Open()
