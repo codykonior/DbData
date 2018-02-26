@@ -17,7 +17,6 @@ test_script:
       Install-Module Disposable -Force -AllowClobber
       Install-Module Error -Force -AllowClobber
       Install-Module Pester -Force -AllowClobber
-      Install-Module DbData -Force -AllowClobber
 
       $env:PSModulePath = "$((Get-Item .).FullName)\;$($env:PSModulePath)"
       $res = Invoke-Pester -Path "." -OutputFormat NUnitXml -OutputFile TestsResults.xml -PassThru
@@ -28,7 +27,6 @@ test_script:
       Install-Module Disposable -Force -AllowClobber
       Install-Module Error -Force -AllowClobber
       Install-Module Pester -Force -AllowClobber
-      Install-Module PoshRSJob -Force -AllowClobber
 
       $env:PSModulePath = "$((Get-Item .).FullName)\;$($env:PSModulePath)"
       $res = Invoke-Pester -Path "." -OutputFormat NUnitXml -OutputFile TestsResults.xml -PassThru
