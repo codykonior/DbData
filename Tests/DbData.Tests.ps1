@@ -3,7 +3,7 @@ Describe "DbData" {
     Get-ChildItem $PSScriptRoot Test-*.ps1 | ForEach-Object {
         . $_.FullName
     }
-    $ServerInstance = "C1N1"
+    $ServerInstance = "localhost"
     $userId = "sa"
     $password = "Password12!"
 
