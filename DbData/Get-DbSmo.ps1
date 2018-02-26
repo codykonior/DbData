@@ -27,7 +27,7 @@ Cache all possible data in a minimum of reads.
 
 .PARAMETER PreloadAg
 Only cache Availability Group data (otherwise this is extremely chatty).
- 
+
 .INPUTS
 A server name, a connection string, or a connection object.
 
@@ -44,7 +44,7 @@ function Get-DbSmo {
     param (
         [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ServerInstance", Position = 0)]
         [Alias("SqlServerName")]
-		[string] $ServerInstance,
+        [string] $ServerInstance,
         [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ConnectionString", Position = 0)]
         [string] $ConnectionString,
         [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "SqlConnection", Position = 0)]
@@ -61,29 +61,26 @@ function Get-DbSmo {
     process {
         $parameterSetName = $PSCmdlet.ParameterSetName
 
-		Use-DbRetry {
+        Use-DbRetry {
             # ServerConnection can be initialised with a server name, or a sql connection
             switch ($parameterSetName) {
                 "ServerInstance" {
-        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
-    				$connection.ServerInstance = $ServerInstance
+                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance)
                 }
                 "ConnectionString" {
-        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection
-    				$connection.ConnectionString = $ConnectionString
+                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ConnectionString $ConnectionString)
                 }
                 "SqlConnection" {
-        			$connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
+                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
                 }
             }
-			Add-DbOpen $connection.SqlConnectionObject
 
             # Server can be initialised with either a server nama serverconnection object
-			$smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
+            $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 
             if ($Preload) {
                 $smo.SetDefaultInitFields($true)
-                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)   
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
             } elseif ($PreloadAg) {
                 $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
                 $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
@@ -91,12 +88,12 @@ function Get-DbSmo {
             }
 
             $smo.ConnectionContext.Connect() # Get ready
-			if (!$smo.Version) {
-				throw (New-Object System.Data.DataException("SMO connection silently failed"))
-			}
+            if (!$smo.Version) {
+                throw (New-Object System.Data.DataException("SMO connection silently failed"))
+            }
             $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it
             $smo
-		}
+        }
     }
 
     end {

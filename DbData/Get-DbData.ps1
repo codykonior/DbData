@@ -17,7 +17,7 @@ A SqlCommand likely from New-DbCommand.
 An optional list of custom table names to use for the result set, in order. By default these are Table, Table1, Table2, etc.
 
 .PARAMETER OutputAs
-The type of data to return. It can be scalar (the first column of the first row of a result set), a non query (an integer), datarows, datatables, or a dataset.
+The type of data to return. It can be scalar (the first column of the first row of a result set), a non query (an integer), datarow, datatable, or a dataset.
 
 .PARAMETER NoSchema
 For some simple operations, where no editing is required, you might want to skip schema gathering.
@@ -40,7 +40,7 @@ See the OutputAs parameter.
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 New-DbConnection $serverInstance master | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -As NonQuery | Out-Null
-$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTables
+$dbData = New-DbConnection $serverInstance master | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTable
 $dbData.Alter(@{ B = "AAA" }) | Out-Null
 $dbData.Alter(@{ B = @("AAA", "BBB", "CCC") }) | Out-Null
 $dbData.Alter(@{ B = @(000, 001, 002) }) | Out-Null
@@ -83,7 +83,7 @@ Results:
     Class      : 0
     Server     : .\SQL2016
     Message    : Moo
-    Procedure  : 
+    Procedure  :
     LineNumber : 1
 
 Stores objects from the message stream into a variable (which is overwritten).
@@ -99,14 +99,14 @@ function Get-DbData {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [System.Data.SqlClient.SqlCommand] $SqlCommand,
         [string[]] $TableMapping = @(),
-        
-        [ValidateSet("NonQuery", "Scalar", "DataRows", "DataSet", "DataTables")]
+
+        [ValidateSet("NonQuery", "Scalar", "DataRow", "DataSet", "DataTable")]
         [Alias("As")]
-        $OutputAs = "DataRows",
+        $OutputAs = "DataRow",
 
         [switch] $NoSchema,
         [switch] $NoCommandBuilder,
-        $InfoMessageVariable = (New-Object Collections.ArrayList),
+        $InfoMessageVariable = (New-Object System.Collections.ArrayList),
 
         $CollectionJoin = [Environment]::NewLine
     )
@@ -119,7 +119,7 @@ function Get-DbData {
             # Write-Error has been substituted for Write-Verbose here because otherwise it gets lost
             try {
                 $_ | Select-Object -ExpandProperty Errors | ForEach-Object {
-                    [void] $InfoMessageVariable.Add($_)                    
+                    [void] $InfoMessageVariable.Add($_)
 
                     if ($_.Class -le 10) {
                         "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
@@ -138,15 +138,15 @@ function Get-DbData {
         $alterScript = {
             [CmdletBinding()]
             param (
-                $DataRows
+                $DataRow
             )
             Set-StrictMode -Version Latest
             $ErrorActionPreference = "Stop"
 
             # Process multiple rows one at a time
-            foreach ($row in $DataRows) {
+            foreach ($row in $DataRow) {
                 $table = $this
-            
+
                 # Get the incoming column names
                 if ($row -is [System.Data.DataRow]) {
                     $rowColumnNames = $row.Table.Columns | Select-Object -ExpandProperty ColumnName
@@ -187,7 +187,7 @@ function Get-DbData {
                             $propertyNull = $row[$property] -eq $null
                             $propertyValue = $row[$property]
                         }
-                        
+
                         if ($newRow[$property] -ne $propertyValue) {
                             if ($propertyNull) {
                                 if ($newRow[$property] -ne [DBNull]::Value) {
@@ -208,7 +208,7 @@ function Get-DbData {
                             $propertyNull = $row[$property] -eq $null
                             $propertyValue = $row[$property]
                         }
-                        
+
                         if ($propertyNull) {
                             if ($newRow[$property] -ne [DBNull]::Value) {
                                 $newRow[$property] = [DBNull]::Value
@@ -220,9 +220,16 @@ function Get-DbData {
 
                     $table.Rows.Add($newRow)
                 }
+                # This must be done here rather than all at once. This is so
+                # IDs can be updated after each row - otherwise multiple rows
+                # inserted at once will start to error.
+                $sqlDataAdapter.Update($this)
             }
 
-            $sqlDataAdapter.Update($this)
+            # This is done at the end if we only deleted rows
+            if (!$DataRow) {
+                $sqlDataAdapter.Update($this)
+            }
         }
     }
 
@@ -262,11 +269,11 @@ function Get-DbData {
                             Write-Verbose "Couldn't retrieve schema data $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
                     }
-                    
-                    [void] $sqlDataAdapter.Fill($dataSet)        
+
+                    [void] $sqlDataAdapter.Fill($dataSet)
 
                     # Add Insert/Update/Delete commands
-                    if ($OutputAs -ne "DataRows" -and !$NoCommandBuilder -and $dataSet.Tables.Count -ne 0) {
+                    if ($OutputAs -ne "DataRow" -and !$NoCommandBuilder -and $dataSet.Tables.Count -ne 0) {
                         try {
                             New-DisposableObject ($commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
                                 # Insert commands are the most likely to generate because they don't need a PK
@@ -281,11 +288,11 @@ function Get-DbData {
                                 $sqlDataAdapter.DeleteCommand = $commandBuilder.GetDeleteCommand().Clone()
                                 $sqlDataAdapter.UpdateCommand = $commandBuilder.GetUpdateCommand().Clone()
                             }
-                        } catch { 
+                        } catch {
                             # Swallow. We can't write it verbosely because verbose is used for print statements.
                             Write-Verbose "Couldn't build command for $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
-                        
+
                         if ($sqlDataAdapter.InsertCommand -or $sqlDataAdapter.UpdateCommand -or $sqlDataAdapter.DeleteCommand) {
                             # Store a link to the data adapter against the first table along with the alter script
                             Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript.GetNewClosure()
@@ -293,7 +300,7 @@ function Get-DbData {
                     }
                 }
             }
-                
+
             switch ($OutputAs) {
                 "NonQuery" {
                     $nonQuery
@@ -303,7 +310,7 @@ function Get-DbData {
                     $scalar
                     break
                 }
-                "DataRows" {
+                "DataRow" {
                     $dataSet.Tables | Select-Object -ExpandProperty Rows
                     break
                 }

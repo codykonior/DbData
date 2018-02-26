@@ -45,6 +45,9 @@ A switch to enable this functionality which is required for Entity Framework (bu
 .PARAMETER MultiSubnetFailover
 For High Availability scenarios connections will be concurrently attempted on multiple IPs concurrently (but only for Availability Group listeners and Failover Clusters on SQL 2012+). This is not required as of .NET Framework 4.6.1 as it's enabled automatically.
 
+.PARAMETER ConnectionString
+A connection string to start off with.
+
 .PARAMETER Open
 Open the connection for you before returning it. Make sure you close it at some stage.
 
@@ -77,12 +80,12 @@ https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlconnectionstri
 #>
 
 function New-DbConnection {
-	[CmdletBinding()]
+    [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideDefaultParameterValue", "UserName")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "Password")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "SqlCredential")]
-	param (
+    param (
         $ApplicationIntent,
         $ApplicationName,
         $AsynchronousProcessing,
@@ -96,18 +99,18 @@ function New-DbConnection {
         $ConnectTimeout,
         $ContextConnection,
         $CurrentLanguage,
-	    [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 1)]
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [Alias("SqlServerName")]
         [Alias("ServerInstance")]
-        $DataSource,
+        [string] $DataSource,
         $Encrypt,
         $Enlist,
         $FailoverPartner,
-        [Parameter(Position = 2)]
+        [Parameter(Position = 1)]
         [Alias("Database")]
         [Alias("DatabaseName")]
-        $InitialCatalog,
+        [string] $InitialCatalog,
         $IntegratedSecurity,
         $LoadBalanceTimeout,
         $MaxPoolSize,
@@ -116,8 +119,8 @@ function New-DbConnection {
         $MultiSubnetFailover,
         $NetworkLibrary,
         $PacketSize,
-        [Parameter(Position = 4)]
-        $Password,
+        [Parameter(Position = 3)]
+        [string] $Password,
         $PersistSecurityInfo,
         $Pooling,
         $Replication,
@@ -125,24 +128,26 @@ function New-DbConnection {
         $TransparentNetworkIPResolution,
         $TrustServerCertificate,
         $TypeSystemVersion,
-        [Parameter(Position = 3)]
+        [Parameter(Position = 2)]
         [Alias("UserName")]
-        $UserID,
+        [string] $UserID,
         $UserInstance,
         [Alias("ComputerName")]
         [Alias("HostName")]
-        $WorkstationID,
+        [string] $WorkstationID,
+        $ConnectionString,
 
         $SqlCredential,
         [switch] $AsString,
-        [switch] $Open
-	)
+        [switch] $Open,
+        [switch] $FireInfoMessageEventOnUserErrors
+    )
 
     begin {
     }
 
     process {
-	    $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
+        $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
 
         if ($DataSource) {
             $connectionBuilder["Data Source"] = $DataSource
@@ -261,13 +266,17 @@ function New-DbConnection {
             $connectionBuilder.ConnectionString
         } else {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
-			Add-DbOpen $sqlConnection
- 
+            Add-DbOpen $sqlConnection
+
+            if ($FireInfoMessageEventOnUserErrors) {
+                $sqlConnection.FireInfoMessageEventOnUserErrors = $true
+            }
+
             if ($SqlCredential) {
                 if ($SqlCredential -is [System.Management.Automation.PSCredential]) {
                     $SqlCredential.Password.MakeReadOnly()
                     $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
-                }                
+                }
                 $SqlConnection.Credential = $SqlCredential
             }
             if ($Open) {
@@ -275,8 +284,8 @@ function New-DbConnection {
             }
             $sqlConnection
         }
-    } 
+    }
 
     end {
     }
-} 
+}
