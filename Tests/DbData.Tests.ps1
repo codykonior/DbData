@@ -16,16 +16,19 @@ Describe "DbData" {
     $sqlCredential = New-Object System.Data.SqlClient.SqlCredential($userId, $securePassword)
     $badSqlCredential = New-Object System.Data.SqlClient.SqlCredential($userId, $badSecurePassword)
 
+    $setup = "IF OBJECT_ID('dbo.MyData') IS NOT NULL DROP TABLE dbo.MyData; CREATE TABLE dbo.MyData ([Id] INT IDENTITY(1, 1) PRIMARY KEY, SSN VARCHAR(11));"
+    New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $setup | Get-DbData -OutputAs NonQuery | Out-Null
+
     Context "New-DbConnection" {
         It "returns a connection string" {
             $connection = New-DbConnection $ServerInstance -AsString
             $connection.GetType().FullName | Should -Be "System.String"
-            $connection | Should -Be "Data Source=C1N1;Integrated Security=True"
+            $connection | Should -Be "Data Source=$($serverInstance);Integrated Security=True"
         }
         It "returns a SqlConnection" {
             $connection = New-DbConnection $ServerInstance
             $connection.GetType().FullName | Should -Be "System.Data.SqlClient.SqlConnection"
-            $connection.ConnectionString | Should -Be "Data Source=C1N1;Integrated Security=True"
+            $connection.ConnectionString | Should -Be "Data Source=$($serverInstance);Integrated Security=True"
         }
         It "uses the provided database" {
             $connection = New-DbConnection $ServerInstance
