@@ -183,11 +183,11 @@ Describe "DbData" {
             # Insert two SSNs
             $query = "SELECT * FROM dbo.MyData ORDER BY SSN;"
             $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataTable
-            $dt.Alter(@{
-                    SSN = "111-11-1111"
-                }, @{
-                    SSN = "111-11-1112"
-                }) | Should -Be 1
+            $dt.Alter(@(@{
+                        SSN = "111-11-1111"
+                    }, @{
+                        SSN = "111-11-1112"
+                    })) | Should -Be 1, 1
 
             # Check the SSNs are both there
             $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataRow
