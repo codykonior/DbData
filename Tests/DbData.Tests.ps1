@@ -67,7 +67,7 @@ Describe "DbData" {
     }
 
     Context "Get-DbSmo" {
-        It "uses New-DbConnection so it can be redirected with `$PSDefaultParameterValues" {
+        <#It "uses New-DbConnection so it can be redirected with `$PSDefaultParameterValues" {
             Mock -ModuleName DbData New-DbConnection { Write-Error "Caught" }
             try {
                 Get-DbSmo $ServerInstance
@@ -77,15 +77,33 @@ Describe "DbData" {
         }
         # Unmock
         Import-Module DbData -Force
-
-        It "works with a server name" {
+#>
+        It "works with a server name directly" {
             { Get-DbSmo $ServerInstance } | Should -Not -Throw
         }
-        It "works with a connection string" {
-            { Get-DbSmo -ConnectionString (New-DbConnection $ServerInstance -AsString) } | Should -Not -Throw
+        It "works with a server name pipe" {
+            { $ServerInstance | Get-DbSmo } | Should -Not -Throw
         }
-        It "works with a SqlConnection" {
+        It "works with a server name pipe property" {
+            { [PSCustomObject] @{ ServerInstance = $ServerInstance } | Get-DbSmo } | Should -Not -Throw
+        }
+
+        $connectionString = New-DbConnection $ServerInstance -AsString
+        It "works with a connection string directly" {
+            { Get-DbSmo -ConnectionString $connectionString } | Should -Not -Throw
+        }
+        It "works with a connection string pipe property" {
+            { [PSCustomObject] @{ ConnectionString = $connectionString } | Get-DbSmo } | Should -Not -Throw
+        }
+
+        It "works with a SqlConnection directly" {
+            { Get-DbSmo (New-DbConnection $ServerInstance) } | Should -Not -Throw
+        }
+        It "works with a SqlConnection pipe" {
             { New-DbConnection $ServerInstance | Get-DbSmo } | Should -Not -Throw
+        }
+        It "works with a SqlConnection pipe property" {
+            { [PSCustomObject] @{ SqlConnection = New-DbConnection $ServerInstance } | Get-DbSmo } | Should -Not -Throw
         }
     }
 

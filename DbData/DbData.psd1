@@ -12,7 +12,7 @@
     RootModule        = 'DbData.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.5.0'
+    ModuleVersion     = '1.5.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -24,7 +24,7 @@
     Author            = 'Cody Konior'
 
     # Company or vendor of this module
-    CompanyName       = ''
+    CompanyName       = 'Cody Konior'
 
     # Copyright statement for this module
     Copyright         = '(c) 2015 Cody Konior. All rights reserved.'

@@ -42,12 +42,12 @@ $smo = Get-DbSmo . -Preload
 function Get-DbSmo {
     [CmdletBinding(DefaultParameterSetName = "ServerInstance")]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ServerInstance", Position = 0)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
         [Alias("SqlServerName")]
         [string] $ServerInstance,
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "ConnectionString", Position = 0)]
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = "ConnectionString", Position = 1)]
         [string] $ConnectionString,
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "SqlConnection", Position = 0)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 1)]
         [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
         [switch] $Preload,
