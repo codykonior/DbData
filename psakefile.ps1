@@ -1,4 +1,4 @@
-Task default -depends FunctionsToExport, Analyze
+Task default -depends FunctionsToExport
 
 Task FunctionsToExport {
     $moduleName = Get-Item . | ForEach-Object BaseName
@@ -25,4 +25,3 @@ Task FunctionsToExport {
 Task Analyze {
     Invoke-ScriptAnalyzer . -Recurse -Severity Warning -ExcludeRule "PSAvoidUsingWriteHost"
 }
-

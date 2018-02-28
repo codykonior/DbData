@@ -5,14 +5,14 @@ Create an SQL command.
 
 .DESCRIPTION
 Creates an SQL command safely. This combines:
-* A connection string or connection object.
+* A connection object.
 * A command.
 * Parameters specified as a hash table.
 * Query timeouts.
 * An existing transaction.
 
 .PARAMETER Connection
-Connection string or SqlConnection.
+A SqlConnection from New-DbConnection.
 
 .PARAMETER Command
 The command or stored procedure name to execute.
@@ -68,10 +68,10 @@ The third query prints some output. The fourth query prints output and then trig
 function New-DbCommand {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        $Connection, # Connection string or System.Data.SqlClient.SqlConnection
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
-        [Parameter(Mandatory = $true, Position = 0)]
+        [Parameter(Mandatory, Position = 0)]
         [Alias("Query")]
         $Command,
         [Parameter(Position = 1)]
@@ -90,15 +90,7 @@ function New-DbCommand {
     }
 
     process {
-        # If we are passed a connection string instead of a connection, build the connection object
-        if (!$Connection) {
-            Write-Error "Needs a Connection"
-        } elseif ($Connection -is [string]) {
-            $Connection = New-Object System.Data.SqlClient.SqlConnection($Connection)
-        }
-
-        # If neither a connection or connection string were specified then no connection is attached
-        $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($Command, $Connection)
+        $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($Command, $SqlConnection)
         $sqlCommand.CommandType = $CommandType
         if ($CommandTimeout) {
             $sqlCommand.CommandTimeout = $CommandTimeout
