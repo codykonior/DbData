@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - None.
 
-## [1.5.2] - 2018-02-28
+## [1.5.3] - 2018-02-28
 ### Modified
 - `New-DbCommand` no longer accepts a connection string directly. Send it a
 SqlConnection object from New-DbConnectionString instead.

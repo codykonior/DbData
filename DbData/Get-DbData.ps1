@@ -325,9 +325,13 @@ function Get-DbData {
             }
         } catch {
             # Don't allow the raw exception to bubble as that won't allow you
-            # to control what to do with -ErrorAction Continue,  e.g. if you
+            # to control what to do with -ErrorAction Continue, e.g. if you
             # want to allow the pipeline to finish despite errors.
-            Write-Error $_
+            if ($_.psobject.Properties["Exception"] -and $_.Exception) {
+                Write-Error -Exception $_.Exception
+            } else {
+                Write-Error $_
+            }
         } finally {
             if ($closeConnection -and $SqlCommand.Connection.State -eq "Open") {
                 $SqlCommand.Connection.Close()
