@@ -56,7 +56,7 @@ Describe "DbData" {
         It "retries 3 times by default on query timeouts" {
             $output = try {
                 Use-DbRetry {
-                    New-DbConnection $ServerInstance | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
+                    New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
                 } -Verbose *>&1
             } catch {
             }
