@@ -5,7 +5,7 @@
 .DESCRIPTION
 
 .PARAMETER ServerInstance
- 
+
 .INPUTS
 
 .OUTPUTS
@@ -22,7 +22,6 @@ function Add-DbOpen {
     )
 
     begin {
-        [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo")
     }
 
     process {
