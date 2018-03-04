@@ -27,16 +27,20 @@ function Add-DbOpen {
     process {
        Add-Member -InputObject $SqlConnection -MemberType ScriptMethod -Name Open -Force -Value {
 			$task = $this.OpenAsync()
-			$caughtException = $null
 
-            try {
-                $result = $task.Wait($this.ConnectionTimeout * 1000)
-            } catch {
-				$caughtException = $_
-			} finally {
-				# Tasks can take a little bit to mark completion
-				while (!$task.IsCompleted) {
-					Start-Sleep -Milliseconds 500
+			$result = $null
+			$exception = $null
+
+			do {
+				try {
+					$result = $task.Wait($this.ConnectionTimeout * 1000)
+
+					# It can take a little bit to mark completion
+					if (!$task.IsCompleted) {
+						Start-Sleep -Milliseconds 500
+					}
+				} catch {
+					$exception = $_
 				}
 
 				# Pass on most detailed task exception available
@@ -46,14 +50,11 @@ function Add-DbOpen {
 					} else {
 						throw $task.Exception
 					}
+				} elseif ($exception) {
+					throw $exception
 				}
-
-				# Otherwise pass on any other exception
-				if ($caughtException) {
-					throw $caughtException
-				}
-            }
-        }
+			} until ($result -or $exception)
+		}
     }
 
     end {
