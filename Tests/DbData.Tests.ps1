@@ -25,6 +25,16 @@ Describe "DbData" {
             $connection.GetType().FullName | Should -Be "System.String"
             $connection | Should -Be "Data Source=$($serverInstance);Integrated Security=True"
         }
+        It "handles Pooling properly whether as a [bool] or string" {
+            $connection = New-DbConnection $ServerInstance -AsString -Pooling True
+            $connection | Should -BeLike "*Pooling=True*"
+            $connection = New-DbConnection $ServerInstance -AsString -Pooling $True
+            $connection | Should -BeLike "*Pooling=True*"
+            $connection = New-DbConnection $ServerInstance -AsString -Pooling False
+            $connection | Should -BeLike "*Pooling=False*"
+            $connection = New-DbConnection $ServerInstance -AsString -Pooling $False
+            $connection | Should -BeLike "*Pooling=False*"
+        }
         It "returns a SqlConnection" {
             $connection = New-DbConnection $ServerInstance
             $connection.GetType().FullName | Should -Be "System.Data.SqlClient.SqlConnection"

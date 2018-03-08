@@ -137,6 +137,7 @@ function New-DbConnection {
         [string] $WorkstationID,
         $ConnectionString,
 
+        [Alias("Credential")]
         $SqlCredential,
         [switch] $AsString,
         [switch] $Open,
@@ -149,116 +150,116 @@ function New-DbConnection {
     process {
         $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
 
-        if ($DataSource) {
+        if ($PSBoundParameters.ContainsKey("DataSource")) {
             $connectionBuilder["Data Source"] = $DataSource
         }
-        if ($FailoverPartner) {
+        if ($PSBoundParameters.ContainsKey("FailoverPartner")) {
             $connectionBuilder["Failover Partner"] = $FailoverPartner
         }
-        if ($AttachDbFilename) {
+        if ($PSBoundParameters.ContainsKey("AttachDbFilename")) {
             $connectionBuilder["AttachDbFilename"] = $AttachDbFilename
         }
-        if ($InitialCatalog) {
+        if ($PSBoundParameters.ContainsKey("InitialCatalog")) {
             $connectionBuilder["Initial Catalog"] = $InitialCatalog
         }
-        if ($IntegratedSecurity) {
+        if ($PSBoundParameters.ContainsKey("IntegratedSecurity")) {
             $connectionBuilder["Integrated Security"] = $IntegratedSecurity
         }
-        if ($PersistSecurityInfo) {
+        if ($PSBoundParameters.ContainsKey("PersistSecurityInfo")) {
             $connectionBuilder["Persist Security Info"] = $PersistSecurityInfo
         }
-        if ($UserID) {
+        if ($PSBoundParameters.ContainsKey("UserID")) {
             $connectionBuilder["User ID"] = $UserID
         }
-        if ($Password) {
+        if ($PSBoundParameters.ContainsKey("Password")) {
             $connectionBuilder["Password"] = $Password
         }
-        if ($Enlist) {
+        if ($PSBoundParameters.ContainsKey("Enlist")) {
             $connectionBuilder["Enlist"] = $Enlist
         }
-        if ($Pooling) {
-            $connectionBuilder["Pooling"] = $Pooling.ToString()
+        if ($PSBoundParameters.ContainsKey("Pooling")) {
+            $connectionBuilder["Pooling"] = $Pooling
         }
-        if ($MinPoolSize) {
+        if ($PSBoundParameters.ContainsKey("MinPoolSize")) {
             $connectionBuilder["Min Pool Size"] = $MinPoolSize
         }
-        if ($MaxPoolSize) {
+        if ($PSBoundParameters.ContainsKey("MaxPoolSize")) {
             $connectionBuilder["Max Pool Size"] = $MaxPoolSize
         }
-        if ($AsynchronousProcessing) {
+        if ($PSBoundParameters.ContainsKey("AsynchronousProcessing")) {
             $connectionBuilder["Asynchronous Processing"] = $AsynchronousProcessing
         }
-        if ($ConnectionReset) {
+        if ($PSBoundParameters.ContainsKey("ConnectionReset")) {
             $connectionBuilder["Connection Reset"] = $ConnectionReset
         }
-        if ($MultipleActiveResultSets) {
+        if ($PSBoundParameters.ContainsKey("MultipleActiveResultSets")) {
             $connectionBuilder["MultipleActiveResultSets"] = $MultipleActiveResultSets
         }
-        if ($Replication) {
+        if ($PSBoundParameters.ContainsKey("Replication")) {
             $connectionBuilder["Replication"] = $Replication
         }
-        if ($ConnectTimeout) {
+        if ($PSBoundParameters.ContainsKey("ConnectTimeout")) {
             $connectionBuilder["Connect Timeout"] = $ConnectTimeout
         }
-        if ($Encrypt) {
+        if ($PSBoundParameters.ContainsKey("Encrypt")) {
             $connectionBuilder["Encrypt"] = $Encrypt
         }
-        if ($TrustServerCertificate) {
+        if ($PSBoundParameters.ContainsKey("TrustServerCertificate")) {
             $connectionBuilder["TrustServerCertificate"] = $TrustServerCertificate
         }
-        if ($LoadBalanceTimeout) {
+        if ($PSBoundParameters.ContainsKey("LoadBalanceTimeout")) {
             $connectionBuilder["Load Balance Timeout"] = $LoadBalanceTimeout
         }
-        if ($NetworkLibrary) {
+        if ($PSBoundParameters.ContainsKey("NetworkLibrary")) {
             $connectionBuilder["Network Library"] = $NetworkLibrary
         }
-        if ($PacketSize) {
+        if ($PSBoundParameters.ContainsKey("PacketSize")) {
             $connectionBuilder["Packet Size"] = $PacketSize
         }
-        if ($TypeSystemVersion) {
+        if ($PSBoundParameters.ContainsKey("TypeSystemVersion")) {
             $connectionBuilder["Type System Version"] = $TypeSystemVersion
         }
-        if ($Authentication) {
+        if ($PSBoundParameters.ContainsKey("Authentication")) {
             $connectionBuilder["Authentication"] = $Authentication
         }
-        if ($ApplicationName) {
+        if ($PSBoundParameters.ContainsKey("ApplicationName")) {
             $connectionBuilder["Application Name"] = $ApplicationName
         }
-        if ($CurrentLanguage) {
+        if ($PSBoundParameters.ContainsKey("CurrentLanguage")) {
             $connectionBuilder["Current Language"] = $CurrentLanguage
         }
-        if ($WorkstationID) {
+        if ($PSBoundParameters.ContainsKey("WorkstationID")) {
             $connectionBuilder["Workstation ID"] = $WorkstationID
         }
-        if ($UserInstance) {
+        if ($PSBoundParameters.ContainsKey("UserInstance")) {
             $connectionBuilder["User Instance"] = $UserInstance
         }
-        if ($ContextConnection) {
+        if ($PSBoundParameters.ContainsKey("ContextConnection")) {
             $connectionBuilder["Context Connection"] = $ContextConnection
         }
-        if ($TransactionBinding) {
+        if ($PSBoundParameters.ContainsKey("TransactionBinding")) {
             $connectionBuilder["Transaction Binding"] = $TransactionBinding
         }
-        if ($ApplicationIntent) {
+        if ($PSBoundParameters.ContainsKey("ApplicationIntent")) {
             $connectionBuilder["ApplicationIntent"] = $ApplicationIntent
         }
-        if ($MultiSubnetFailover) {
+        if ($PSBoundParameters.ContainsKey("MultiSubnetFailover")) {
             $connectionBuilder["MultiSubnetFailover"] = $MultiSubnetFailover
         }
-        if ($TransparentNetworkIPResolution) {
+        if ($PSBoundParameters.ContainsKey("TransparentNetworkIPResolution")) {
             $connectionBuilder["TransparentNetworkIPResolution"] = $TransparentNetworkIPResolution
         }
-        if ($ConnectRetryCount) {
+        if ($PSBoundParameters.ContainsKey("ConnectRetryCount")) {
             $connectionBuilder["ConnectRetryCount"] = $ConnectRetryCount
         }
-        if ($ConnectRetryInterval) {
+        if ($PSBoundParameters.ContainsKey("ConnectRetryInterval")) {
             $connectionBuilder["ConnectRetryInterval"] = $ConnectRetryInterval
         }
-        if ($ColumnEncryptionSetting) {
+        if ($PSBoundParameters.ContainsKey("ColumnEncryptionSetting")) {
             $connectionBuilder["Column Encryption Setting"] = $ColumnEncryptionSetting
         }
 
-        if (!$IntegratedSecurity -and !$UserID -and !$SqlCredential) {
+        if (!$UserID -and !$SqlCredential) {
             $connectionBuilder["Integrated Security"] = $true
         }
 
@@ -268,11 +269,12 @@ function New-DbConnection {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
             Add-DbOpen $sqlConnection
 
-            if ($FireInfoMessageEventOnUserErrors) {
-                $sqlConnection.FireInfoMessageEventOnUserErrors = $true
+            if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) {
+                $sqlConnection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors
             }
 
             if ($SqlCredential) {
+                # Convert Credential to SqlCredential
                 if ($SqlCredential -is [System.Management.Automation.PSCredential]) {
                     $SqlCredential.Password.MakeReadOnly()
                     $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
