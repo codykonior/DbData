@@ -177,7 +177,7 @@ function New-DbConnection {
             $connectionBuilder["Enlist"] = $Enlist
         }
         if ($Pooling) {
-            $connectionBuilder["Pooling"] = $Pooling
+            $connectionBuilder["Pooling"] = $Pooling.ToString()
         }
         if ($MinPoolSize) {
             $connectionBuilder["Min Pool Size"] = $MinPoolSize

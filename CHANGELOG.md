@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - None.
 
+## [1.5.4] - 2018-03-08
+### Fixed
+- `New-DbCommand` now accepts the Pooling parameter as either a string (True,
+  False) or a boolean ($True, $False). If you were using booleans before they
+  would be ignored by ConnectionBuilder as invalid input (without any error)
+  and not be put into the resulting connection string / connection object.
+
 ## [1.5.3] - 2018-02-28
 ### Modified
 - `New-DbCommand` no longer accepts a connection string directly. Send it a
