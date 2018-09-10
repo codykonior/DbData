@@ -1,4 +1,4 @@
-﻿TOPIC
+TOPIC
     about_DbData
 
 SHORT DESCRIPTION
@@ -55,4 +55,4 @@ EXAMPLE #3
     Exit-DbTransaction $dbData -Rollback
 
 LINKS
-	https://github.com/codykonior/DbData
+    https://github.com/codykonior/DbData

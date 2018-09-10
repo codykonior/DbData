@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 Creates an SQL Server SMO Server object for a database engine instance.

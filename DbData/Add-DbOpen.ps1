@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 
@@ -18,7 +18,7 @@ function Add-DbOpen {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, Position = 0)]
-		$SqlConnection # System.Data.SqlClient.SqlConnection
+        $SqlConnection # System.Data.SqlClient.SqlConnection
     )
 
     begin {
@@ -26,35 +26,35 @@ function Add-DbOpen {
 
     process {
        Add-Member -InputObject $SqlConnection -MemberType ScriptMethod -Name Open -Force -Value {
-			$task = $this.OpenAsync()
+            $task = $this.OpenAsync()
 
-			$result = $null
-			$exception = $null
+            $result = $null
+            $exception = $null
 
-			do {
-				try {
-					$result = $task.Wait($this.ConnectionTimeout * 1000)
+            do {
+                try {
+                    $result = $task.Wait($this.ConnectionTimeout * 1000)
 
-					# It can take a little bit to mark completion
-					if (!$task.IsCompleted) {
-						Start-Sleep -Milliseconds 500
-					}
-				} catch {
-					$exception = $_
-				}
+                    # It can take a little bit to mark completion
+                    if (!$task.IsCompleted) {
+                        Start-Sleep -Milliseconds 500
+                    }
+                } catch {
+                    $exception = $_
+                }
 
-				# Pass on most detailed task exception available
-				if ($task.Exception) {
-					if ($task.Exception.psobject.Properties["InnerException"] -and $task.Exception.InnerException) {
-						throw $task.Exception.InnerException
-					} else {
-						throw $task.Exception
-					}
-				} elseif ($exception) {
-					throw $exception
-				}
-			} until ($result -or $exception)
-		}
+                # Pass on most detailed task exception available
+                if ($task.Exception) {
+                    if ($task.Exception.psobject.Properties["InnerException"] -and $task.Exception.InnerException) {
+                        throw $task.Exception.InnerException
+                    } else {
+                        throw $task.Exception
+                    }
+                } elseif ($exception) {
+                    throw $exception
+                }
+            } until ($result -or $exception)
+        }
     }
 
     end {

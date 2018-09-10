@@ -1,4 +1,4 @@
-﻿<#
+<#
 
 .SYNOPSIS
 Creates a SQL Server SMO ManagedComputer object for a server.

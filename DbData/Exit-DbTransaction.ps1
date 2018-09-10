@@ -75,14 +75,14 @@ function Exit-DbTransaction {
         } 
 
         if ($SqlCommand.Transaction) {
-			if ($Rollback) {
-				$sqlCommand.Transaction.Rollback()
-			} else {
-				$sqlCommand.Transaction.Commit()
-			}
-		} elseif ($Commit) {
-			Write-Error "Cannot commit a transaction as a transaction isn't open in this SqlCommand."
-		} # If a Rollback was requested and it has already been closed we ignore it
+            if ($Rollback) {
+                $sqlCommand.Transaction.Rollback()
+            } else {
+                $sqlCommand.Transaction.Commit()
+            }
+        } elseif ($Commit) {
+            Write-Error "Cannot commit a transaction as a transaction isn't open in this SqlCommand."
+        } # If a Rollback was requested and it has already been closed we ignore it
 
 
         if ($passThru) {
