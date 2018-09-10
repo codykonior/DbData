@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - None.
 
+## [1.5.5] - 2018-09-10
+### Fixed
+- Files converted to BOM-less TAB-less UTF-8.
+
 ## [1.5.4] - 2018-03-08
 ### Fixed
 - `New-DbConnection` now properly parses input parameters. Previously it wanted
