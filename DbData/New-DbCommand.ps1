@@ -92,7 +92,7 @@ function New-DbCommand {
     process {
         $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($Command, $SqlConnection)
         $sqlCommand.CommandType = $CommandType
-        if ($CommandTimeout) {
+        if ($PSBoundParameters.ContainsKey("CommandTimeout")) {
             $sqlCommand.CommandTimeout = $CommandTimeout
         }
         if ($Transaction) {

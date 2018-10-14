@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - None.
 
+## [1.5.6] - 2018-10-14
+### Fixed
+- New-DbCommand CommandTimeout of 0 was timing out. It should not have timed
+  out.
+
 ## [1.5.5] - 2018-09-10
 ### Fixed
 - Files converted to BOM-less TAB-less UTF-8.
