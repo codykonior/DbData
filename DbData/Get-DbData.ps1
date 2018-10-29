@@ -184,7 +184,7 @@ function Get-DbData {
                             $propertyNull = $row[$property].Count -eq 0
                             $propertyValue = $row[$property] -join $CollectionJoin
                         } else {
-                            $propertyNull = $row[$property] -eq $null
+                            $propertyNull = $null -eq $row[$property]
                             $propertyValue = $row[$property]
                         }
 
@@ -205,7 +205,7 @@ function Get-DbData {
                             $propertyNull = $row[$property].Count -eq 0
                             $propertyValue = $row[$property] -join $CollectionJoin
                         } else {
-                            $propertyNull = $row[$property] -eq $null
+                            $propertyNull = $null -eq $row[$property]
                             $propertyValue = $row[$property]
                         }
 

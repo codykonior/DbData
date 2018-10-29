@@ -72,7 +72,7 @@ function Exit-DbTransaction {
 
         if (!$sqlCommand.Connection) {
             Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
-        } 
+        }
 
         if ($SqlCommand.Transaction) {
             if ($Rollback) {

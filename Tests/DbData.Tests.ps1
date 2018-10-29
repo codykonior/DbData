@@ -1,5 +1,9 @@
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "")]
+param (
+)
+
 Describe "DbData" {
-    Import-Module DbData -Force
+    Import-Module .\DbData -Force
     Get-ChildItem $PSScriptRoot Test-*.ps1 | ForEach-Object {
         . $_.FullName
     }
@@ -69,10 +73,12 @@ Describe "DbData" {
                     New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
                 } -Verbose *>&1
             } catch {
+                "Catch"
             }
             $output[0] | Should -Match "Try 1"
             $output[1] | Should -Match "Try 2"
             $output[2] | Should -Match "Try 3"
+            $output[3] | Should -Match "Catch"
         }
     }
 

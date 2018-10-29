@@ -97,7 +97,6 @@ function Use-DbRetry {
             } else {
                 Start-Sleep -Milliseconds (Get-Random (1000 * $try)) # Backoff
             }
-        } 
+        }
     }
 }
-

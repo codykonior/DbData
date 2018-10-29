@@ -69,7 +69,7 @@ function New-DbBulkCopy {
     process {
         Use-DbRetry {
             $closeConnection = $false
-            
+
             try {
                 if ($InputObject -is [string]) {
                     $bulkCopy = New-Object System.Data.SqlClient.SqlBulkCopy($InputObject, $Options)
@@ -106,7 +106,7 @@ function New-DbBulkCopy {
 
                     # Required in case we've added columns, they will not be in order, and as long As you specify the names here it will all work okay
                     $bulkCopy.ColumnMappings.Clear()
-                    $table.Columns | ForEach-Object { 
+                    $table.Columns | ForEach-Object {
                         [void] $bulkCopy.ColumnMappings.Add((New-Object System.Data.SqlClient.SqlBulkCopyColumnMapping($_.ColumnName, $_.ColumnName)))
                     }
                     $bulkCopy.WriteToServer($table)

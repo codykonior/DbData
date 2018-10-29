@@ -66,7 +66,7 @@ function Enter-DbTransaction {
         if (!$sqlCommand.Connection) {
             Write-Error "InputObject requires a valid associated SqlConnection before a transaction can be started."
         }
-        
+
         if ($sqlCommand.Connection.State -ne "Open") {
             Write-Debug "Opening connection"
             $sqlCommand.Connection.Open()

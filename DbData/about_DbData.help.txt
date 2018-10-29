@@ -23,7 +23,7 @@ REQUIREMENTS
     Requires .NET 3.5 or later installed.
     Options for New-DbConnection vary between .NET Framework versions. Some
     were added as recently as 4.6.1.
-    
+
 EXAMPLE #1
     Connect to a database and get rows back.
 
