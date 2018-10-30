@@ -4,6 +4,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/oefdf90a75hqsk69?svg=true)](https://ci.appveyor.com/project/codykonior/dbdata)
 
+Read the [CHANGELOG][3]
+
 ## Description
 
 DbData is an awesome replacement for Invoke-Sqlcmd and Invoke-Sqlcmd2.
