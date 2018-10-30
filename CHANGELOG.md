@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - None.
 
+## [1.5.7] - 2018-10-30
+### Changes
+- Internal structure and documentation. Version bump for PowerShell Gallery.
+
 ## [1.5.6] - 2018-10-14
 ### Fixed
 - New-DbCommand CommandTimeout of 0 was timing out. It should not have timed
