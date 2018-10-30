@@ -3,14 +3,6 @@ services:
 
 build: false
 
-skip_commits:
-  files:
-    - README.md
-    - CHANGELOG.md
-    - .vscode/*
-    - .github/*
-    - Images/*
-
 test_script:
   - ps: |
       Install-Module Disposable -Force -AllowClobber
