@@ -12,7 +12,7 @@
 RootModule = 'DbData.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.5.7'
+ModuleVersion = '1.5.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

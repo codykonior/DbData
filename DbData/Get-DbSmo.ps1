@@ -16,6 +16,9 @@ This wrapper gets around each of these faults, the last of which by connecting a
 .PARAMETER ServerInstance
 A server instance to connect to, for example ".\SQL2016"
 
+.PARAMETER SqlCredential
+A SqlCredential containing the username and password for use with a ServerInstance.
+
 .PARAMETER ConnectionString
 A connection string.
 
@@ -45,8 +48,13 @@ function Get-DbSmo {
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
         [Alias("SqlServerName")]
         [string] $ServerInstance,
+        [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 2)]
+        [Alias("Credential")]
+        [string] $SqlCredential,
+
         [Parameter(Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = "ConnectionString", Position = 1)]
         [string] $ConnectionString,
+
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 1)]
         [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
@@ -65,7 +73,7 @@ function Get-DbSmo {
             # ServerConnection can be initialised with a server name, or a sql connection
             switch ($parameterSetName) {
                 "ServerInstance" {
-                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance)
+                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance -SqlCredential $SqlCredential)
                 }
                 "ConnectionString" {
                     $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ConnectionString $ConnectionString)

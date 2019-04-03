@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - None.
 
+## [1.5.8] - 2019-04-03
+### Added
+- `Get-DbSmo` can now accept a `SqlCredential` when used with a server name.
+
 ## [1.5.7] - 2018-10-30
 ### Changes
 - Internal structure and documentation. Version bump for PowerShell Gallery.
