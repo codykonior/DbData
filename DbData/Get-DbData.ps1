@@ -17,18 +17,15 @@ A SqlCommand likely from New-DbCommand.
 An optional list of custom table names to use for the result set, in order. By default these are Table, Table1, Table2, etc.
 
 .PARAMETER OutputAs
-The type of data to return. It can be scalar (the first column of the first row of a result set), a non query (an integer), datarow, datatable, or a dataset.
-
-.PARAMETER NoSchema
-For some simple operations, where no editing is required, you might want to skip schema gathering.
-
-.PARAMETER NoCommandBuild
-For some simple operations, where no editing is required, you might want to skip command building.
+The type of data to return. It can be scalar (the first column of the first row of a result set), a non query (an integer), datarow, pscustomobject, datatable, or a dataset.
 
 .PARAMETER InfoMessageVariable
 An object of System.Collections.ArrayList which will be appended with all info message objects received while running the command, in addition to formatted versions written to the verbose stream.
 
-.PARAMETER CollectionJoin
+.PARAMETER Alter
+Fil the schema, create a command builder, and add an Alter function to the first returned table.
+
+.PARAMETER AlterCollectionSeparator
 A character to join any non-string collections that are passed in when calling .Alter() on a table. For example, for joining @() and ArrayList. Empty collections are converted to DBNull.
 
 .INPUTS
@@ -100,15 +97,14 @@ function Get-DbData {
         [System.Data.SqlClient.SqlCommand] $SqlCommand,
         [string[]] $TableMapping = @(),
 
-        [ValidateSet("NonQuery", "Scalar", "DataRow", "DataSet", "DataTable")]
+        [ValidateSet("NonQuery", "Scalar", "DataRow", "DataSet", "DataTable", "PSCustomObject")]
         [Alias("As")]
-        $OutputAs = "DataRow",
+        $OutputAs = "PSCustomObject",
 
-        [switch] $NoSchema,
-        [switch] $NoCommandBuilder,
         $InfoMessageVariable = (New-Object System.Collections.ArrayList),
 
-        $CollectionJoin = [Environment]::NewLine
+        [switch] $Alter,
+        $AlterCollectionSeparator = [Environment]::NewLine
     )
 
     begin {
@@ -182,7 +178,7 @@ function Get-DbData {
                     foreach ($property in ($rowColumnNames | Where-Object { $pkName -notcontains $_ })) {
                         if ($row[$property] -is [System.Collections.ICollection] -and $row[$property] -isnot [byte[]]) {
                             $propertyNull = $row[$property].Count -eq 0
-                            $propertyValue = $row[$property] -join $CollectionJoin
+                            $propertyValue = $row[$property] -join $AlterCollectionSeparator
                         } else {
                             $propertyNull = $null -eq $row[$property]
                             $propertyValue = $row[$property]
@@ -203,7 +199,7 @@ function Get-DbData {
                     foreach ($property in $rowColumnNames) {
                         if ($row[$property] -is [System.Collections.ICollection] -and $row[$property] -isnot [byte[]]) {
                             $propertyNull = $row[$property].Count -eq 0
-                            $propertyValue = $row[$property] -join $CollectionJoin
+                            $propertyValue = $row[$property] -join $AlterCollectionSeparator
                         } else {
                             $propertyNull = $null -eq $row[$property]
                             $propertyValue = $row[$property]
@@ -262,7 +258,7 @@ function Get-DbData {
                     }
 
                     $dataSet = New-Object System.Data.DataSet
-                    if (!$NoSchema) {
+                    if ($Alter) {
                         try {
                             [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
                         } catch {
@@ -273,7 +269,7 @@ function Get-DbData {
                     [void] $sqlDataAdapter.Fill($dataSet)
 
                     # Add Insert/Update/Delete commands
-                    if ($OutputAs -ne "DataRow" -and !$NoCommandBuilder -and $dataSet.Tables.Count -ne 0) {
+                    if ($OutputAs -in "DataTable", "DataSet" -and $Alter -and $dataSet.Tables.Count -ne 0) {
                         try {
                             New-DisposableObject ($commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
                                 # Insert commands are the most likely to generate because they don't need a PK
@@ -314,12 +310,30 @@ function Get-DbData {
                     $dataSet.Tables | Select-Object -ExpandProperty Rows
                     break
                 }
-                "DataSet" {
-                    $dataSet
+                "DataTable" {
+                    $dataSet.Tables
                     break
                 }
-                default {
-                    $dataSet.Tables
+                "PSCustomObject" {
+                    foreach ($dataTable in $dataSet.Tables) {
+                        foreach ($dataRow in $dataTable.Rows) {
+                            $pscustomobject = @{}
+
+                            foreach ($columnName in $dataTable.Columns.ColumnName) {
+                                if ($dataRow.$columnName -ne [DBNull]::Value) {
+                                    $pscustomobject.$columnName = $dataRow.$columnName
+                                } else {
+                                    $pscustomobject.$columnName = $null
+                                }
+                            }
+
+                            [PSCustomObject] $pscustomobject
+                        }
+                    }
+                    break
+                }
+                "DataSet" {
+                    $dataSet
                     break
                 }
             }

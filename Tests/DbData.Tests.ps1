@@ -126,13 +126,13 @@ Describe "DbData" {
     Context "Get-DbData output" {
         It "might return one data row" {
             $output = New-DbConnection $ServerInstance -SqlCredential $sqlCredential |
-                New-DbCommand "SELECT 99 AS Something;" | Get-DbData
+                New-DbCommand "SELECT 99 AS Something;" | Get-DbData -OutputAs DataRow
             $output.GetType().FullName | Should -Be "System.Data.DataRow"
             $output.Something | Should -Be 99
         }
         It "it might return more data rows" {
             $output = New-DbConnection $ServerInstance -SqlCredential $sqlCredential |
-                New-DbCommand "SELECT 99 AS Something; SELECT 100 AS Something;" | Get-DbData
+                New-DbCommand "SELECT 99 AS Something; SELECT 100 AS Something;" | Get-DbData -OutputAs DataRow
             $output.Count | Should -Be 2
             $output[0].GetType().FullName | Should -Be "System.Data.DataRow"
             $output[0].Something | Should -Be 99
@@ -216,7 +216,7 @@ Describe "DbData" {
         It "inserts data" {
             # Insert two SSNs
             $query = "SELECT * FROM dbo.MyData ORDER BY SSN;"
-            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataTable
+            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataTable -Alter
             $dt.Alter(@(@{
                         SSN = "111-11-1111"
                     }, @{
@@ -224,28 +224,28 @@ Describe "DbData" {
                     })) | Should -Be 1, 1
 
             # Check the SSNs are both there
-            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataRow
+            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData
             $dt | Select-Object -First 1 -ExpandProperty SSN | Should -Be "111-11-1111"
             $dt | Select-Object -Last 1 -ExpandProperty SSN | Should -Be "111-11-1112"
         }
         It "updates data" {
             # Change one of the SSNs
             $query = "SELECT * FROM dbo.MyData ORDER BY SSN;"
-            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataTable
+            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataTable -Alter
             $dt.Alter(@{
                     Id  = 1
                     SSN = "111-11-1113"
                 }) | Should -Be 1
 
             # Confirm it has changed
-            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData -OutputAs DataRow
+            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query | Get-DbData
             $dt | Select-Object -ExpandProperty SSN | Should -Not -Be "111-11-1111"
             $dt | Select-Object -Last 1 -ExpandProperty SSN | Should -Be "111-11-1113"
         }
         It "deletes data" {
             # Delete only the SSN we don't want
             $query = "SELECT * FROM dbo.MyData WHERE SSN = @SSN;"
-            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query -Parameters @{ SSN = '111-11-1113'; } | Get-DbData -OutputAs DataTable
+            $dt = New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $query -Parameters @{ SSN = '111-11-1113'; } | Get-DbData -OutputAs DataTable -Alter
             $dt | Should -Not -BeNullOrEmpty
             $dt.Rows.Delete()
             $dt.Alter() | Should -Be 1

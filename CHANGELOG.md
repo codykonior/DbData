@@ -9,7 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
-## [1.6.0] - 2019-04-03
+## [2.0.0] - 2019-04-18
+
+**This has real breaking changes.**
+
+### Changed
+
+- PSCustomObject types are returned by default instead of DataRow.
+- Alter functions are no longer added by default.
+- Get-DbData parameter CollectionJoin renamed AlterCollectionSeparator.
+
+### Added
+
+- Get-DbData can output as PSCustomObject.
+- Get-DbData parameter Alter. This performs the Schema and CommandBuilder
+  phases, and adds the Alter function. This can only be used with OutputAs
+  DataTable and DataSet.
+
+### Removed
+
+- Get-DbData parameters NoSchema and NoCommandBuilder.
+
+## [1.6.0] - 2019-04-18
 
 ### Changed
 
