@@ -50,7 +50,7 @@ function Get-DbSmo {
         [string] $ServerInstance,
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 2)]
         [Alias("Credential")]
-        [string] $SqlCredential,
+        $SqlCredential,
 
         [Parameter(Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = "ConnectionString", Position = 1)]
         [string] $ConnectionString,

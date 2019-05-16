@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.1] - 2019-05-17
+
+### Fixed
+
+- Remove string type from Get-DbSmo SqlCredential that shouldn't have been
+  there.
+- Re-introduced SqlServer as a dependency. This forces it to load first. I
+  found lots of issues where Get-DbSmo can be used without SqlServer being
+  loaded and thus picking up incorrect GAC SMO DLLs, which then causes
+  later uses of SqlServer functions not fail in mysterious ways.
+
 ## [2.0.0] - 2019-04-18
 
 **This has real breaking changes.**
