@@ -2,7 +2,7 @@
 
 ![][1]
 
-[![Build status](https://ci.appveyor.com/api/projects/status/oefdf90a75hqsk69?svg=true)](https://ci.appveyor.com/project/codykonior/dbdata)
+[![Build status](https://ci.appveyor.com/api/projects/status/5yd9egki6r69u864?svg=true)](https://ci.appveyor.com/project/codykonior/dbdata)
 
 Read the [CHANGELOG][3]
 

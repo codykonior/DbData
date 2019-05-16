@@ -7,6 +7,7 @@ test_script:
   - ps: |
       Install-Module Disposable -Force -AllowClobber
       Install-Module Error -Force -AllowClobber
+      Install-Module SqlServer -Force -AllowClobber
       Install-Module Pester -Force -AllowClobber
       Install-Module PSScriptAnalyzer -Force -AllowClobber
 
