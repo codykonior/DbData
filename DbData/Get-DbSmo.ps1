@@ -63,7 +63,6 @@ function Get-DbSmo {
     )
 
     begin {
-        [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.Smo")
     }
 
     process {

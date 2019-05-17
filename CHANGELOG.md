@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.2] - 2019-05-17
+
+### Fixed
+
+- Removed direct references to the SMO DLL. This prevents old ones from being
+  loaded from the GAC and causing issues that are hard to trace.
+- Add a warning if SMO DLLs are detected other than those loaded by the
+  SqlServer module.
+
 ## [2.0.1] - 2019-05-17
 
 ### Fixed
