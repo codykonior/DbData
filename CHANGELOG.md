@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.5] - 2019-05-20
+
+### Fixed
+
+- PSObject types were returning $True BIT fields as NULL. Who knew $true -eq
+  [DBNull]::Value? Switched to -is [DBNull].
+
 ## [2.0.4] - 2019-05-20
 
 ### Fixed

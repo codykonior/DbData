@@ -186,7 +186,7 @@ function Get-DbData {
 
                         if ($newRow[$property] -ne $propertyValue) {
                             if ($propertyNull) {
-                                if ($newRow[$property] -ne [DBNull]::Value) {
+                                if ($newRow[$property] -isnot [DBNull]) {
                                     $newRow[$property] = [DBNull]::Value
                                 }
                             } else {
@@ -206,7 +206,7 @@ function Get-DbData {
                         }
 
                         if ($propertyNull) {
-                            if ($newRow[$property] -ne [DBNull]::Value) {
+                            if ($newRow[$property] -isnot [DBNull]) {
                                 $newRow[$property] = [DBNull]::Value
                             }
                         } else {
@@ -321,7 +321,7 @@ function Get-DbData {
                             $pscustomobject = @{}
 
                             foreach ($columnName in $dataTable.Columns.ColumnName) {
-                                if ($dataRow.$columnName -ne [DBNull]::Value) {
+                                if ($dataRow.$columnName -isnot [DBNull]) {
                                     $pscustomobject.$columnName = $dataRow.$columnName
                                 } else {
                                     $pscustomobject.$columnName = $null
