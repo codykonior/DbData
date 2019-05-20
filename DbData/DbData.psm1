@@ -24,6 +24,6 @@ if ($Debugging) {
     $ExecutionContext.InvokeCommand.InvokeScript($false, [scriptblock]::Create($scriptBlock), $null, $null)
 }
 
-if ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_ -like "C:\Windows\assembly\*Sql*.dll" }) {
+if ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -like "C:\Windows\assembly\*Sql*.dll" }) {
     Write-Warning "SMO DLLs have been loaded from the GAC which may lead to obscure errors"
 }
