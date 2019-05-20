@@ -40,6 +40,9 @@ It then starts a second connection with a short timeout and attempts to select d
 
 The transaction is then rolled back (no output).
 
+.NOTES
+https://docs.microsoft.com/en-us/azure/sql-database/sql-database-connectivity-issues
+
 #>
 
 function Use-DbRetry {

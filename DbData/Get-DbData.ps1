@@ -250,7 +250,6 @@ function Get-DbData {
                 }
                 default {
                     $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
-                    $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
 
                     # Name the tables if they were passed in
                     for ($i = 0; $i -lt $TableMapping.Count; $i++) {
@@ -260,8 +259,10 @@ function Get-DbData {
                     $dataSet = New-Object System.Data.DataSet
                     if ($Alter) {
                         try {
+                            $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
                             [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
                         } catch {
+                            $sqlDataAdapter.MissingSchemaAction = "Add"
                             Write-Verbose "Couldn't retrieve schema data $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
                     }

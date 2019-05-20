@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.3] - 2019-05-20
+
+### Fixed
+
+- Get-DbData won't fail on CREATE PROCEDURE statements anymore. It seems if you
+  use AddWithKey on these with .NET it fails. Now it only sets it if it's trying
+  to get the schema for -Alter, and even then if that fails it will set it back
+  to Add instead.
+
 ## [2.0.2] - 2019-05-17
 
 ### Fixed
