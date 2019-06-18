@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.6] - 2019-06-18
+
+### Fixed
+
+- Added aliases for constrained endpoint compatibility.
+
 ## [2.0.5] - 2019-05-20
 
 ### Fixed
