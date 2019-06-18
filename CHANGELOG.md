@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.7] - 2019-06-18
+
+### Fixed
+
+- Remove Get-DbWmi reference to LoadWithPartialName bringing up wrong SMO DLL.
+
 ## [2.0.6] - 2019-06-18
 
 ### Fixed
