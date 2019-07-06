@@ -318,7 +318,7 @@ function Get-DbData {
                 "PSCustomObject" {
                     foreach ($dataTable in $dataSet.Tables) {
                         foreach ($dataRow in $dataTable.Rows) {
-                            $pscustomobject = @{}
+                            $pscustomobject = [ordered] @{}
 
                             foreach ($columnName in $dataTable.Columns.ColumnName) {
                                 if ($dataRow.$columnName -isnot [DBNull]) {

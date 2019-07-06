@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.0.8] - 2019-07-06
+
+### Fixed
+
+- Get-DbData return as PSCustomObject will retain column order now.
+
 ## [2.0.7] - 2019-06-18
 
 ### Fixed
