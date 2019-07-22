@@ -98,7 +98,7 @@ function Use-DbRetry {
             if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $Seconds) {
                 throw
             }
-            Start-Sleep -Milliseconds (Get-Random (1000 * $useDbRetryCount)) # Linear random backoff, 3 minutes = ~15 retries
+            Start-Sleep -Milliseconds (Get-Random ($useDbRetryCount * 3000)) # Linear random backoff, 3 minutes = ~15 retries
         }
     }
 }

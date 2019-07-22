@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.1] - 2019-07-22
+
+### Changed
+
+- Use-DbRetry sleeps are up to 3s long to start with. This gives ~15 retries
+  per 3 minutes.
+
 ## [2.1.0] - 2019-07-22
 
 ### Changed
