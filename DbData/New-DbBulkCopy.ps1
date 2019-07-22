@@ -45,6 +45,7 @@ New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-
 
 function New-DbBulkCopy {
     [CmdletBinding()]
+    [system.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [Alias("SqlTransaction")]
@@ -98,7 +99,7 @@ function New-DbBulkCopy {
                 if ($Data -is [System.Data.DataSet]) {
                     $tables = $Data.Tables
                 } else {
-                    $tables = ,$Data
+                    $tables = , $Data
                 }
 
                 foreach ($table in $tables) {

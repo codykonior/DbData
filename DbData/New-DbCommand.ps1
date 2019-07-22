@@ -67,6 +67,7 @@ The third query prints some output. The fourth query prints output and then trig
 
 function New-DbCommand {
     [CmdletBinding()]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
         [System.Data.SqlClient.SqlConnection] $SqlConnection,

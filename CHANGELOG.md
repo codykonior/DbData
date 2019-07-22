@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.5] - 2019-07-22
+
+### Fixed
+
+- Make tests pass.
+
 ## [2.1.4] - 2019-07-22
 
 ### Changed

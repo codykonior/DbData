@@ -44,6 +44,7 @@ $smo = Get-DbSmo . -Preload
 
 function Get-DbSmo {
     [CmdletBinding(DefaultParameterSetName = "ServerInstance")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "")]
     param (
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
         [Alias("SqlServerName")]
