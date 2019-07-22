@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.4] - 2019-07-22
+
+### Changed
+
+- Get-DbSmo now defaults to a -RetryCount of 3 again if no RetryCount or
+  RetrySeconds is provided. So this is like pre-2.1.0 behavior.
+
 ## [2.1.3] - 2019-07-22
 
 ### Changed
