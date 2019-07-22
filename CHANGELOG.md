@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.2] - 2019-07-22
+
+### Changed
+
+- If a username/password is supplied for SQL authentication then we convert it
+  to a SqlCredential now. The only time this isn't done is when you use the
+  -AsString switch to get a connection string.
+
 ## [2.1.1] - 2019-07-22
 
 ### Changed

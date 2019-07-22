@@ -168,12 +168,6 @@ function New-DbConnection {
         if ($PSBoundParameters.ContainsKey("PersistSecurityInfo")) {
             $connectionBuilder["Persist Security Info"] = $PersistSecurityInfo
         }
-        if ($PSBoundParameters.ContainsKey("UserID")) {
-            $connectionBuilder["User ID"] = $UserID
-        }
-        if ($PSBoundParameters.ContainsKey("Password")) {
-            $connectionBuilder["Password"] = $Password
-        }
         if ($PSBoundParameters.ContainsKey("Enlist")) {
             $connectionBuilder["Enlist"] = $Enlist
         }
@@ -264,23 +258,42 @@ function New-DbConnection {
         }
 
         if ($AsString) {
+            # If we're returning a string we have no choice but to give input UserID and Password
+            if ($PSBoundParameters.ContainsKey("UserID")) {
+                $connectionBuilder["User ID"] = $UserID
+            }
+            if ($PSBoundParameters.ContainsKey("Password")) {
+                $connectionBuilder["Password"] = $Password
+            }
+
             $connectionBuilder.ConnectionString
         } else {
             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
             Add-DbOpen $sqlConnection
 
-            if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) {
-                $sqlConnection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors
-            }
-
-            if ($SqlCredential) {
+            if ($PSBoundParameters.ContainsKey("SqlCredential")) {
                 # Convert Credential to SqlCredential
                 if ($SqlCredential -is [System.Management.Automation.PSCredential]) {
                     $SqlCredential.Password.MakeReadOnly()
                     $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
                 }
                 $SqlConnection.Credential = $SqlCredential
+            } elseif ($PSBoundParameters.ContainsKey("UserID")) {
+                if ([string]::IsNullOrEmpty($Password)) {
+                    # This allows a blank password...
+                    $securePassword = New-Object System.Security.SecureString
+                } else {
+                    $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+                }
+                $securePassword.MakeReadOnly()
+                $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($UserID, $securePassword)
+                $SqlConnection.Credential = $SqlCredential
             }
+
+            if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) {
+                $sqlConnection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors
+            }
+
             if ($Open) {
                 $sqlConnection.Open()
             }
