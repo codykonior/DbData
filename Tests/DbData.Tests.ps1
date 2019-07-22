@@ -71,7 +71,7 @@ Describe "DbData" {
             $output = try {
                 Use-DbRetry {
                     New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
-                } -Count 3 -Verbose *>&1
+                } -RetryCount 3 -Verbose *>&1
             } catch {
                 "Catch"
             }

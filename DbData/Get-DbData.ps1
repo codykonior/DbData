@@ -104,7 +104,10 @@ function Get-DbData {
         $InfoMessageVariable = (New-Object System.Collections.ArrayList),
 
         [switch] $Alter,
-        $AlterCollectionSeparator = [Environment]::NewLine
+        $AlterCollectionSeparator = [Environment]::NewLine,
+
+        $RetryCount,
+        $RetrySeconds
     )
 
     begin {
@@ -234,110 +237,112 @@ function Get-DbData {
 
         try {
             $closeConnection = $false
-            if ($SqlCommand.Connection.State -ne "Open") {
-                $SqlCommand.Connection.Open()
-                $closeConnection = $true
-            }
-
-            switch ($OutputAs) {
-                "Scalar" {
-                    $scalar = $SqlCommand.ExecuteScalar()
-                    break
+            Use-DbRetry {
+                if ($SqlCommand.Connection.State -ne "Open") {
+                    $SqlCommand.Connection.Open()
+                    $closeConnection = $true
                 }
-                "NonQuery" {
-                    $nonQuery = $SqlCommand.ExecuteNonQuery()
-                    break
-                }
-                default {
-                    $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
 
-                    # Name the tables if they were passed in
-                    for ($i = 0; $i -lt $TableMapping.Count; $i++) {
-                        [void] $sqlDataAdapter.TableMappings.Add("Table$(if ($i -ne 0) { $i })", $TableMapping[$i])
+                switch ($OutputAs) {
+                    "Scalar" {
+                        $scalar = $SqlCommand.ExecuteScalar()
+                        break
                     }
+                    "NonQuery" {
+                        $nonQuery = $SqlCommand.ExecuteNonQuery()
+                        break
+                    }
+                    default {
+                        $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
 
-                    $dataSet = New-Object System.Data.DataSet
-                    if ($Alter) {
-                        try {
-                            $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
-                            [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
-                        } catch {
-                            $sqlDataAdapter.MissingSchemaAction = "Add"
-                            Write-Verbose "Couldn't retrieve schema data $($sqlDataAdapter.SelectCommand.CommandText) because $_"
+                        # Name the tables if they were passed in
+                        for ($i = 0; $i -lt $TableMapping.Count; $i++) {
+                            [void] $sqlDataAdapter.TableMappings.Add("Table$(if ($i -ne 0) { $i })", $TableMapping[$i])
                         }
-                    }
 
-                    [void] $sqlDataAdapter.Fill($dataSet)
-
-                    # Add Insert/Update/Delete commands
-                    if ($OutputAs -in "DataTable", "DataSet" -and $Alter -and $dataSet.Tables.Count -ne 0) {
-                        try {
-                            New-DisposableObject ($commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
-                                # Insert commands are the most likely to generate because they don't need a PK
-                                $sqlDataAdapter.InsertCommand = $commandBuilder.GetInsertCommand().Clone()
-                                if ($identityColumn = $dataSet.Tables[0].Columns | Where-Object { $_.AutoIncrement -eq $true }) {
-                                    $sqlDataAdapter.InsertCommand.CommandText += "; Select @Id = Scope_Identity();"
-                                    $sqlDataAdapter.InsertCommand.Parameters.Add("@Id", [System.Data.SqlDbType]::BigInt, 0, $identityColumn.ColumnName).Direction = "Output"
-                                    $sqlDataAdapter.InsertCommand.UpdatedRowSource = "OutputParameters"
-                                }
-
-                                # These will fail on tables without a PK
-                                $sqlDataAdapter.DeleteCommand = $commandBuilder.GetDeleteCommand().Clone()
-                                $sqlDataAdapter.UpdateCommand = $commandBuilder.GetUpdateCommand().Clone()
+                        $dataSet = New-Object System.Data.DataSet
+                        if ($Alter) {
+                            try {
+                                $sqlDataAdapter.MissingSchemaAction = "AddWithKey"
+                                [void] $sqlDataAdapter.FillSchema($dataSet, [System.Data.SchemaType]::Mapped)
+                            } catch {
+                                $sqlDataAdapter.MissingSchemaAction = "Add"
+                                Write-Verbose "Couldn't retrieve schema data $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                             }
-                        } catch {
-                            # Swallow. We can't write it verbosely because verbose is used for print statements.
-                            Write-Verbose "Couldn't build command for $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                         }
 
-                        if ($sqlDataAdapter.InsertCommand -or $sqlDataAdapter.UpdateCommand -or $sqlDataAdapter.DeleteCommand) {
-                            # Store a link to the data adapter against the first table along with the alter script
-                            Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript.GetNewClosure()
-                        }
-                    }
-                }
-            }
+                        [void] $sqlDataAdapter.Fill($dataSet)
 
-            switch ($OutputAs) {
-                "NonQuery" {
-                    $nonQuery
-                    break
-                }
-                "Scalar" {
-                    $scalar
-                    break
-                }
-                "DataRow" {
-                    $dataSet.Tables | Select-Object -ExpandProperty Rows
-                    break
-                }
-                "DataTable" {
-                    $dataSet.Tables
-                    break
-                }
-                "PSCustomObject" {
-                    foreach ($dataTable in $dataSet.Tables) {
-                        foreach ($dataRow in $dataTable.Rows) {
-                            $pscustomobject = [ordered] @{}
+                        # Add Insert/Update/Delete commands
+                        if ($OutputAs -in "DataTable", "DataSet" -and $Alter -and $dataSet.Tables.Count -ne 0) {
+                            try {
+                                New-DisposableObject ($commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
+                                    # Insert commands are the most likely to generate because they don't need a PK
+                                    $sqlDataAdapter.InsertCommand = $commandBuilder.GetInsertCommand().Clone()
+                                    if ($identityColumn = $dataSet.Tables[0].Columns | Where-Object { $_.AutoIncrement -eq $true }) {
+                                        $sqlDataAdapter.InsertCommand.CommandText += "; Select @Id = Scope_Identity();"
+                                        $sqlDataAdapter.InsertCommand.Parameters.Add("@Id", [System.Data.SqlDbType]::BigInt, 0, $identityColumn.ColumnName).Direction = "Output"
+                                        $sqlDataAdapter.InsertCommand.UpdatedRowSource = "OutputParameters"
+                                    }
 
-                            foreach ($columnName in $dataTable.Columns.ColumnName) {
-                                if ($dataRow.$columnName -isnot [DBNull]) {
-                                    $pscustomobject.$columnName = $dataRow.$columnName
-                                } else {
-                                    $pscustomobject.$columnName = $null
+                                    # These will fail on tables without a PK
+                                    $sqlDataAdapter.DeleteCommand = $commandBuilder.GetDeleteCommand().Clone()
+                                    $sqlDataAdapter.UpdateCommand = $commandBuilder.GetUpdateCommand().Clone()
                                 }
+                            } catch {
+                                # Swallow. We can't write it verbosely because verbose is used for print statements.
+                                Write-Verbose "Couldn't build command for $($sqlDataAdapter.SelectCommand.CommandText) because $_"
                             }
 
-                            [PSCustomObject] $pscustomobject
+                            if ($sqlDataAdapter.InsertCommand -or $sqlDataAdapter.UpdateCommand -or $sqlDataAdapter.DeleteCommand) {
+                                # Store a link to the data adapter against the first table along with the alter script
+                                Add-Member -InputObject $dataSet.Tables[0] -MemberType ScriptMethod -Name Alter -Value $alterScript.GetNewClosure()
+                            }
                         }
                     }
-                    break
                 }
-                "DataSet" {
-                    $dataSet
-                    break
+
+                switch ($OutputAs) {
+                    "NonQuery" {
+                        $nonQuery
+                        break
+                    }
+                    "Scalar" {
+                        $scalar
+                        break
+                    }
+                    "DataRow" {
+                        $dataSet.Tables | Select-Object -ExpandProperty Rows
+                        break
+                    }
+                    "DataTable" {
+                        $dataSet.Tables
+                        break
+                    }
+                    "PSCustomObject" {
+                        foreach ($dataTable in $dataSet.Tables) {
+                            foreach ($dataRow in $dataTable.Rows) {
+                                $pscustomobject = [ordered] @{}
+
+                                foreach ($columnName in $dataTable.Columns.ColumnName) {
+                                    if ($dataRow.$columnName -isnot [DBNull]) {
+                                        $pscustomobject.$columnName = $dataRow.$columnName
+                                    } else {
+                                        $pscustomobject.$columnName = $null
+                                    }
+                                }
+
+                                [PSCustomObject] $pscustomobject
+                            }
+                        }
+                        break
+                    }
+                    "DataSet" {
+                        $dataSet
+                        break
+                    }
                 }
-            }
+            } -RetryCount $RetryCount -RetrySeconds $RetrySeconds
         } catch {
             # Don't allow the raw exception to bubble as that won't allow you
             # to control what to do with -ErrorAction Continue, e.g. if you

@@ -61,7 +61,10 @@ function New-DbBulkCopy {
 
         [System.Data.SqlClient.SqlBulkCopyOptions] $Options = [System.Data.SqlClient.SqlBulkCopyOptions]::Default,
         $Timeout,
-        [switch] $PassThru
+        [switch] $PassThru,
+
+        $RetryCount,
+        $RetrySeconds
     )
 
     begin {
@@ -122,7 +125,7 @@ function New-DbBulkCopy {
                     }
                 }
             }
-        }
+        } -RetryCount $RetryCount -RetrySeconds $RetrySeconds
         if ($PassThru) {
             $InputObject
         }

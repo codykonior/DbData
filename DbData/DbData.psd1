@@ -12,7 +12,7 @@
     RootModule        = 'DbData.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '2.1.5'
+    ModuleVersion     = '2.1.6'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -52,7 +52,6 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @('Disposable',
-        'Error',
         'SqlServer')
 
     # Assemblies that must be loaded prior to importing this module

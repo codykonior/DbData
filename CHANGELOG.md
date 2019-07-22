@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.6] - 2019-07-22
+
+### Added
+
+- Get-DbData and New-DbBulkCopy can take -RetryCount and -RetrySeconds parameters.
+
+### Changed
+
+- Use-DbRetry parameters changed from $Count to $RetryCount and from $Seconds
+  to $RetrySeconds. It makes sense to have the same names as what will decorate
+  most of the other functions.
+- Remove a dependency on the Error module. It's not longer needed as we don't
+  test for specific errors.
+
+### Fixed
+- More throws replaced with Write-Error -Exception.
+
 ## [2.1.5] - 2019-07-22
 
 ### Fixed

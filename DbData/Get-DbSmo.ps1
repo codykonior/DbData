@@ -79,39 +79,39 @@ function Get-DbSmo {
 
         $parameterSetName = $PSCmdlet.ParameterSetName
 
+        # ServerConnection can be initialised with a server name, or a sql connection
+        switch ($parameterSetName) {
+            "ServerInstance" {
+                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance -SqlCredential $SqlCredential)
+            }
+            "ConnectionString" {
+                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ConnectionString $ConnectionString)
+            }
+            "SqlConnection" {
+                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
+            }
+        }
+
+        # Server can be initialised with either a server name or a serverconnection object
+        $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
+
+        if ($Preload) {
+            $smo.SetDefaultInitFields($true)
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
+        } elseif ($PreloadAg) {
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DatabaseReplicaState], $true)
+        }
+
         Use-DbRetry {
-            # ServerConnection can be initialised with a server name, or a sql connection
-            switch ($parameterSetName) {
-                "ServerInstance" {
-                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance -SqlCredential $SqlCredential)
-                }
-                "ConnectionString" {
-                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ConnectionString $ConnectionString)
-                }
-                "SqlConnection" {
-                    $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
-                }
-            }
-
-            # Server can be initialised with either a server nama serverconnection object
-            $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
-
-            if ($Preload) {
-                $smo.SetDefaultInitFields($true)
-                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
-            } elseif ($PreloadAg) {
-                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
-                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
-                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DatabaseReplicaState], $true)
-            }
-
             $smo.ConnectionContext.Connect() # Get ready
             if (!$smo.Version) {
-                throw (New-Object System.Data.DataException("SMO connection silently failed"))
+                Write-Error -Exception (New-Object System.Data.DataException("SMO connection silently failed"))
             }
             $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it
             $smo
-        } -Count $RetryCount -Seconds $RetrySeconds
+        } -RetryCount $RetryCount -RetrySeconds $RetrySeconds
     }
 
     end {

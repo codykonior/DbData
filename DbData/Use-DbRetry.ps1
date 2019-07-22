@@ -51,12 +51,12 @@ function Use-DbRetry {
         [Parameter(Mandatory)]
         [scriptblock] $Script,
 
-        $Count,
-        $Seconds
+        $RetryCount,
+        $RetrySeconds
     )
 
-    $useDbRetryStartTime = Get-Date
     $useDbRetryCount = 0
+    $useDbRetryStartTime = Get-Date
     while ($true) {
         try {
             Set-StrictMode -Version Latest
@@ -98,18 +98,18 @@ function Use-DbRetry {
 
             $useDbRetryCount++
 
-            if ($null -ne $Count) {
-                if ($useDbRetryCount -gt $Count) {
-                    throw
+            if ($null -ne $RetryCount) {
+                if ($useDbRetryCount -gt $RetryCount) {
+                    Write-Error -Exception $useDbRetryException
                 }
             }
-            if ($null -ne $Seconds) {
-                if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $Seconds) {
-                    throw
+            if ($null -ne $RetrySeconds) {
+                if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $RetrySeconds) {
+                    Write-Error -Exception $useDbRetryException
                 }
             }
-            if ($null -eq $Count -and $null -eq $Seconds) {
-                throw
+            if ($null -eq $RetryCount -and $null -eq $RetrySeconds) {
+                Write-Error -Exception $useDbRetryException
             }
 
             Start-Sleep -Milliseconds (Get-Random ($useDbRetryCount * 3000)) # Linear random backoff, 3 minutes = ~15 retries
