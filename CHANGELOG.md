@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.0] - 2019-07-22
+
+### Changed
+
+- Use-DbRetry now has a -Seconds parameter rather than a -Tries count. It
+  defaults to 3 minutes.
+- Use-DbRetry is now less smart and will catch all exceptions. It's probably
+  better this way.
+
 ## [2.0.8] - 2019-07-06
 
 ### Fixed

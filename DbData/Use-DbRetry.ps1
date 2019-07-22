@@ -11,8 +11,8 @@ Retry SQL operations. These are only in limited scenarios:
 .PARAMETER ScriptBlock
 The script you want to execute. It's best to keep this as short as possible, and don't modify variables outside of the scriptblock's scope as they may not be preserved.
 
-.PARAMETER Tries
-The maximum number of tries to attempt. This defaults to 3, meaning one attempt plus two retries may be made.
+.PARAMETER Seconds
+The maximum number of seconds that can elapse for retries. This defaults to 3 minutes.
 
 .INPUTS
 A scriptblock.
@@ -50,56 +50,55 @@ function Use-DbRetry {
     param (
         [Parameter(Mandatory = $true)]
         [scriptblock] $Script,
-        [int] $Tries = 3
+        $Seconds = 180
     )
 
-    $try = 1
-
-    while ($try -le $Tries) {
+    $useDbRetryStartTime = Get-Date
+    $useDbRetryCount = 1
+    while ($true) {
         try {
+            Set-StrictMode -Version Latest
             $ErrorActionPreference = "Stop"
+
             . $Script
             break
         } catch {
-            if (Test-Error -TypeName "Microsoft.SqlServer.Management.Common.ConnectionFailureException") {
-                Write-Verbose "Caught ConnectionFailureException. Try $try."
-                $try++
-            } elseif (Test-Error @{ Message = "SMO connection silently failed" }) {
-                Write-Verbose "Caught silent ConnectionFailureException. Retry $try."
-                $try++
-            } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlException") {
-                if (Test-Error @{ Number = 1205 }) {
-                    Write-Verbose "Caught SqlException deadlock. Try $try."
-                    $try++
-                } elseif (Test-Error @{ Number = -2 }) {
-                    Write-Verbose "Caught SqlException timeout. Try $try."
-                    $try++
-                } else {
-                    Write-Error "Caught SqlException unknown error: $_"
+            $useDbRetryException = $_
+
+            while ($true) {
+                if ($useDbRetryException.GetType().FullName -eq "System.Data.SqlClient.SqlException") {
+                    break
                 }
-            } elseif (Test-Error -TypeName "System.Data.SqlClient.SqlError") {
-                if (Test-Error @{ Number = 10054 }) {
-                    Write-Verbose "Caught SqlError connection error. Try $try."
-                    $try++
+
+                if ($useDbRetryException.psobject.Properties["Exception"] -and $null -ne $useDbRetryException.Exception) {
+                    $useDbRetryException = $useDbRetryException.Exception
+                } elseif ($useDbRetryException.psobject.Properties["InnerException"] -and $null -ne $useDbRetryException.InnerException) {
+                    $useDbRetryException = $useDbRetryException.InnerException
                 } else {
-                    Write-Error "Caught SqlError unknown error: $_"
+                    break
                 }
-            } elseif (Test-Error -TypeName "System.Data.DBConcurrencyException") {
-                Write-Verbose "Caught ADO.NET concurrency error. Retry $try."
-                $try++
-            } elseif (Test-Error -TypeName "Microsoft.SqlServer.Management.Dmf.PolicyEvaluationException") {
-                Write-Verbose "Caught SQL policy evaluation error. Retry $try."
-                $try++
-            } else {
-                Write-Error "Caught unknown non-SQL error: $_"
-                $try++
             }
 
-            if ($try -gt $Tries) {
-                throw
-            } else {
-                Start-Sleep -Milliseconds (Get-Random (1000 * $try)) # Backoff
+            $fields = [ordered] @{
+                Retry     = $useDbRetryCount - 1
+                Exception = $useDbRetryException.GetType().FullName
             }
+            if ($fields.Exception -eq "System.Data.SqlClient.SqlException") {
+                $fields.Message = $useDbRetryException.Message
+                $fields."Error Number" = $useDbRetryException.Number
+                $fields."Line Number" = $useDbRetryException.LineNumber
+                $fields.Source = $useDbRetryException.Source
+                $fields.Procedure = $useDbRetryException.Procedure
+            }
+            $fields = [PSCustomObject] $fields
+            $fields.psobject.TypeNames.Insert(0, "Use-DbRetry")
+            $fields | Format-Custom | Out-String | Write-Verbose
+
+            $useDbRetryCount++
+            if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $Seconds) {
+                throw
+            }
+            Start-Sleep -Milliseconds (Get-Random (1000 * $useDbRetryCount)) # Linear random backoff, 3 minutes = ~15 retries
         }
     }
 }
