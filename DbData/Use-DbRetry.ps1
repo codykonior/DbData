@@ -55,64 +55,77 @@ function Use-DbRetry {
         $RetrySeconds
     )
 
-    $useDbRetryCount = 0
-    $useDbRetryStartTime = Get-Date
-    while ($true) {
-        try {
-            Set-StrictMode -Version Latest
-            $ErrorActionPreference = "Stop"
+    begin {
+    }
 
-            . $Script
-            break
-        } catch {
-            $useDbRetryException = $_
-
-            while ($true) {
-                if ($useDbRetryException.GetType().FullName -eq "System.Data.SqlClient.SqlException") {
-                    break
-                }
-
-                if ($useDbRetryException.psobject.Properties["Exception"] -and $null -ne $useDbRetryException.Exception) {
-                    $useDbRetryException = $useDbRetryException.Exception
-                } elseif ($useDbRetryException.psobject.Properties["InnerException"] -and $null -ne $useDbRetryException.InnerException) {
-                    $useDbRetryException = $useDbRetryException.InnerException
-                } else {
-                    break
-                }
-            }
-
-            $fields = [ordered] @{
-                Retry     = $useDbRetryCount
-                Exception = $useDbRetryException.GetType().FullName
-            }
-            if ($fields.Exception -eq "System.Data.SqlClient.SqlException") {
-                $fields.Message = $useDbRetryException.Message
-                $fields."Error Number" = $useDbRetryException.Number
-                $fields."Line Number" = $useDbRetryException.LineNumber
-                $fields.Source = $useDbRetryException.Source
-                $fields.Procedure = $useDbRetryException.Procedure
-            }
-            $fields = [PSCustomObject] $fields
-            $fields.psobject.TypeNames.Insert(0, "Use-DbRetry")
-            $fields | Format-Custom | Out-String | Write-Verbose
-
-            $useDbRetryCount++
-
-            if ($null -ne $RetryCount) {
-                if ($useDbRetryCount -gt $RetryCount) {
-                    Write-Error -Exception $useDbRetryException
-                }
-            }
-            if ($null -ne $RetrySeconds) {
-                if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $RetrySeconds) {
-                    Write-Error -Exception $useDbRetryException
-                }
-            }
-            if ($null -eq $RetryCount -and $null -eq $RetrySeconds) {
-                Write-Error -Exception $useDbRetryException
-            }
-
-            Start-Sleep -Milliseconds (Get-Random ($useDbRetryCount * 3000)) # Linear random backoff, 3 minutes = ~15 retries
+    process {
+        # If we haven't supplied any specific retry schedule, default to 3 retries
+        if (-not ($PSBoundParameters["RetryCount"] -or $PSBoundParameters["RetrySeconds"])) {
+            $RetryCount = 3
         }
+
+        $useDbRetryCount = 0
+        $useDbRetryStartTime = Get-Date
+        while ($true) {
+            try {
+                Set-StrictMode -Version Latest
+                $ErrorActionPreference = "Stop"
+
+                . $Script
+                break
+            } catch {
+                $useDbRetryException = $_
+
+                while ($true) {
+                    if ($useDbRetryException.GetType().FullName -eq "System.Data.SqlClient.SqlException") {
+                        break
+                    }
+
+                    if ($useDbRetryException.psobject.Properties["Exception"] -and $null -ne $useDbRetryException.Exception) {
+                        $useDbRetryException = $useDbRetryException.Exception
+                    } elseif ($useDbRetryException.psobject.Properties["InnerException"] -and $null -ne $useDbRetryException.InnerException) {
+                        $useDbRetryException = $useDbRetryException.InnerException
+                    } else {
+                        break
+                    }
+                }
+
+                $fields = [ordered] @{
+                    Retry     = $useDbRetryCount
+                    Exception = $useDbRetryException.GetType().FullName
+                }
+                if ($fields.Exception -eq "System.Data.SqlClient.SqlException") {
+                    $fields.Message = $useDbRetryException.Message
+                    $fields."Error Number" = $useDbRetryException.Number
+                    $fields."Line Number" = $useDbRetryException.LineNumber
+                    $fields.Source = $useDbRetryException.Source
+                    $fields.Procedure = $useDbRetryException.Procedure
+                }
+                $fields = [PSCustomObject] $fields
+                $fields.psobject.TypeNames.Insert(0, "Use-DbRetry")
+                $fields | Format-Custom | Out-String | Write-Verbose
+
+                $useDbRetryCount++
+
+                if ($null -ne $RetryCount) {
+                    if ($useDbRetryCount -gt $RetryCount) {
+                        Write-Error -Exception $useDbRetryException
+                    }
+                }
+                if ($null -ne $RetrySeconds) {
+                    if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $RetrySeconds) {
+                        Write-Error -Exception $useDbRetryException
+                    }
+                }
+                if ($null -eq $RetryCount -and $null -eq $RetrySeconds) {
+                    Write-Error -Exception $useDbRetryException
+                }
+
+                Start-Sleep -Milliseconds (Get-Random ($useDbRetryCount * 3000)) # Linear random backoff, 3 minutes = ~15 retries
+            }
+        }
+    }
+
+    end {
     }
 }

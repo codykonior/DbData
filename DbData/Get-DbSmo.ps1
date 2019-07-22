@@ -70,13 +70,6 @@ function Get-DbSmo {
     }
 
     process {
-        # If we haven't supplied any specific retry schedule, default to 3 counts. This is
-        # because SMO is a little funny and can often fail to connect, we don't want to
-        # have to deal with that absolutely everywhere.
-        if (-not ($PSBoundParameters["RetryCount"] -or $PSBoundParameters["RetrySeconds"])) {
-            $RetryCount = 3
-        }
-
         $parameterSetName = $PSCmdlet.ParameterSetName
 
         # ServerConnection can be initialised with a server name, or a sql connection

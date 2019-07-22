@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.7] - 2019-07-23
+
+### Fixed
+
+- Default RetryCount of 3 on Use-DbRetry instead of just Get-DbSmo.
+- Stop clobbering values, hopefully.
+
 ## [2.1.6] - 2019-07-22
 
 ### Issues
