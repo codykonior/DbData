@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.3] - 2019-07-22
+
+### Changed
+
+- Use-DbRetry now supports -Count (a number of retries in addition to the first
+  try), or -Seconds, or both (whichever is hit first).
+- Get-DbSmo doesn't retry automatically now, but accepts a -RetryCount and
+  -RetrySeconds parameters.
+
 ## [2.1.2] - 2019-07-22
 
 ### Changed

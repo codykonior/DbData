@@ -67,18 +67,19 @@ Describe "DbData" {
     }
 
     Context "Use-DbRetry" {
-        It "retries 3 times by default on query timeouts" {
+        It "retry 3 times when requested on query timeouts" {
             $output = try {
                 Use-DbRetry {
                     New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
-                } -Verbose *>&1
+                } -Count 2 -Verbose *>&1
             } catch {
                 "Catch"
             }
-            $output[0] | Should -Match "Try 1"
-            $output[1] | Should -Match "Try 2"
-            $output[2] | Should -Match "Try 3"
-            $output[3] | Should -Match "Catch"
+            $output[0] | Should -Match ".*Retry = 0.*"
+            $output[1] | Should -Match ".*Retry = 1.*"
+            $output[2] | Should -Match ".*Retry = 2.*"
+            $output[3] | Should -Match ".*Retry = 3.*"
+            $output[4] | Should -Match "Catch"
         }
     }
 

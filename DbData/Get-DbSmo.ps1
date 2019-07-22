@@ -59,7 +59,10 @@ function Get-DbSmo {
         [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
         [switch] $Preload,
-        [switch] $PreloadAg
+        [switch] $PreloadAg,
+
+        $RetryCount,
+        $RetrySeconds
     )
 
     begin {
@@ -100,7 +103,7 @@ function Get-DbSmo {
             }
             $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it
             $smo
-        }
+        } -Count $RetryCount -Seconds $RetrySeconds
     }
 
     end {

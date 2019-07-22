@@ -46,15 +46,17 @@ https://docs.microsoft.com/en-us/azure/sql-database/sql-database-connectivity-is
 #>
 
 function Use-DbRetry {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParametersetName = "Count")]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
         [scriptblock] $Script,
-        $Seconds = 180
+
+        $Count,
+        $Seconds
     )
 
     $useDbRetryStartTime = Get-Date
-    $useDbRetryCount = 1
+    $useDbRetryCount = 0
     while ($true) {
         try {
             Set-StrictMode -Version Latest
@@ -80,7 +82,7 @@ function Use-DbRetry {
             }
 
             $fields = [ordered] @{
-                Retry     = $useDbRetryCount - 1
+                Retry     = $useDbRetryCount
                 Exception = $useDbRetryException.GetType().FullName
             }
             if ($fields.Exception -eq "System.Data.SqlClient.SqlException") {
@@ -95,9 +97,21 @@ function Use-DbRetry {
             $fields | Format-Custom | Out-String | Write-Verbose
 
             $useDbRetryCount++
-            if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $Seconds) {
+
+            if ($null -ne $Count) {
+                if ($useDbRetryCount -gt $Count) {
+                    throw
+                }
+            }
+            if ($null -ne $Seconds) {
+                if (((Get-Date) - $useDbRetryStartTime).TotalSeconds -gt $Seconds) {
+                    throw
+                }
+            }
+            if ($null -eq $Count -and $null -eq $Seconds) {
                 throw
             }
+
             Start-Sleep -Milliseconds (Get-Random ($useDbRetryCount * 3000)) # Linear random backoff, 3 minutes = ~15 retries
         }
     }
