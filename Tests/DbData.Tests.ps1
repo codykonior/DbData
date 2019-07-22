@@ -69,9 +69,7 @@ Describe "DbData" {
     Context "Use-DbRetry" {
         It "retry 3 times when requested on query timeouts" {
             $output = try {
-                Use-DbRetry {
-                    New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData
-                } -RetryCount 3 -Verbose *>&1
+                New-DbConnection $ServerInstance -SqlCredential $credential | New-DbCommand "WAITFOR DELAY '00:00:10'" -CommandTimeout 1 | Get-DbData -RetryCount 3 -Verbose *>&1
             } catch {
                 "Catch"
             }

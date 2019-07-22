@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.6] - 2019-07-22
 
+### Issues
+
+- Using nested Use-DbRetry seems to clobber variables.
+
 ### Added
 
 - Get-DbData and New-DbBulkCopy can take -RetryCount and -RetrySeconds parameters.
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test for specific errors.
 
 ### Fixed
+
 - More throws replaced with Write-Error -Exception.
 
 ## [2.1.5] - 2019-07-22
