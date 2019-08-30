@@ -109,7 +109,7 @@ function New-DbConnection {
         $Encrypt,
         $Enlist,
         $FailoverPartner,
-        [Parameter(Position = 1)]
+        [Parameter(ValueFromPipelineByPropertyName, Position = 1)]
         [Alias("Database")]
         [Alias("DatabaseName")]
         [string] $InitialCatalog,

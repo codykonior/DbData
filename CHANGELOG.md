@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.8] - 2019-08-30
+
+### Added
+
+- DatabaseName can now be passed into New-DbConnection as a property.
+
 ## [2.1.7] - 2019-07-23
 
 ### Fixed
