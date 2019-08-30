@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.1.9] - 2019-08-30
+
+### Fixed
+
+- Support for running the Alter command within constrained endpoints.
+
 ## [2.1.8] - 2019-08-30
 
 ### Added

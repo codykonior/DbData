@@ -117,7 +117,7 @@ function Get-DbData {
 
             # Write-Error has been substituted for Write-Verbose here because otherwise it gets lost
             try {
-                $_ | Select-Object -ExpandProperty Errors | ForEach-Object {
+                $_ | Microsoft.PowerShell.Utility\Select-Object -ExpandProperty Errors | Microsoft.PowerShell.Core\ForEach-Object {
                     [void] $InfoMessageVariable.Add($_)
 
                     if ($_.Class -le 10) {
@@ -148,12 +148,12 @@ function Get-DbData {
 
                 # Get the incoming column names
                 if ($row -is [System.Data.DataRow]) {
-                    $rowColumnNames = $row.Table.Columns | Select-Object -ExpandProperty ColumnName
+                    $rowColumnNames = $row.Table.Columns | Microsoft.PowerShell.Utility\Select-Object -ExpandProperty ColumnName
                 } elseif ($row -is [Hashtable]) {
                     $rowColumnNames = $row.Keys
                 } elseif ($row -is [PSObject]) {
                     $newRow = @{}
-                    $row.psobject.Properties | ForEach-Object {
+                    $row.psobject.Properties | Microsoft.PowerShell.Core\ForEach-Object {
                         $newRow.Add($_.Name, $_.Value)
                     }
                     $row = $newRow
@@ -163,7 +163,7 @@ function Get-DbData {
                 }
 
                 # Get the primary key column names and values, if any
-                $pkName = $table.PrimaryKey | Select-Object -ExpandProperty ColumnName
+                $pkName = $table.PrimaryKey | Microsoft.PowerShell.Utility\Select-Object -ExpandProperty ColumnName
 
                 $pkValue = New-Object Collections.ArrayList
                 foreach ($name in $pkName) {
@@ -312,7 +312,7 @@ function Get-DbData {
                         break
                     }
                     "DataRow" {
-                        $dataSet.Tables | Select-Object -ExpandProperty Rows
+                        $dataSet.Tables | Microsoft.PowerShell.Utility\Select-Object -ExpandProperty Rows
                         break
                     }
                     "DataTable" {
