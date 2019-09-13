@@ -255,7 +255,7 @@ function New-DbConnection {
             $connectionBuilder["Column Encryption Setting"] = $ColumnEncryptionSetting
         }
 
-        if (-not ($UserID -and $SqlCredential)) {
+        if (-not ($UserID -or $SqlCredential)) {
             $connectionBuilder["Integrated Security"] = $true
         }
 
