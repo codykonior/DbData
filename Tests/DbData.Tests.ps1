@@ -103,14 +103,6 @@ Describe "DbData" {
             { [PSCustomObject] @{ ServerInstance = $ServerInstance } | Get-DbSmo } | Should -Not -Throw
         }
 
-        $connectionString = New-DbConnection $ServerInstance -AsString
-        It "works with a connection string directly" {
-            { Get-DbSmo -ConnectionString $connectionString } | Should -Not -Throw
-        }
-        It "works with a connection string pipe property" {
-            { [PSCustomObject] @{ ConnectionString = $connectionString } | Get-DbSmo } | Should -Not -Throw
-        }
-
         It "works with a SqlConnection directly" {
             { Get-DbSmo (New-DbConnection $ServerInstance) } | Should -Not -Throw
         }
