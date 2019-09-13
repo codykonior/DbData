@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.2.0] - 2019-09-13
+
+### Fixed
+
+- I discovered SMO doesn't allow connection pooling if you pass in your own
+  connection object. It leaves those connections dangling which is dangerous.
+  Get-DbSmo has changed to disallow a ConnectionString (as it would now be
+  pointless). It still allows a SqlConnection to be passed in and this is
+  used to allow SMO to construct its own connection.
+  If you really really want SMO to use a connection object of your own then
+  you can use the new -Raw parameter. Good luck.
+- Work around more preload bugs in SMO for Managed Instances.
+
 ## [2.1.9] - 2019-08-30
 
 ### Fixed

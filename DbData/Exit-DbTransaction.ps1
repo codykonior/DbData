@@ -70,7 +70,7 @@ function Exit-DbTransaction {
             Write-Error "InputObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
         }
 
-        if (!$sqlCommand.Connection) {
+        if (-not $sqlCommand.Connection) {
             Write-Error "SqlCommand requires a valid associated SqlConnection before a transaction can be started."
         }
 

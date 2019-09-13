@@ -152,7 +152,7 @@ function Get-DbData {
                 } elseif ($row -is [Hashtable]) {
                     $rowColumnNames = $row.Keys
                 } elseif ($row -is [PSObject]) {
-                    $newRow = @{}
+                    $newRow = @{ }
                     $row.psobject.Properties | Microsoft.PowerShell.Core\ForEach-Object {
                         $newRow.Add($_.Name, $_.Value)
                     }
@@ -226,7 +226,7 @@ function Get-DbData {
             }
 
             # This is done at the end if we only deleted rows
-            if (!$DataRow) {
+            if (-not $DataRow) {
                 $sqlDataAdapter.Update($this)
             }
         }
@@ -236,11 +236,16 @@ function Get-DbData {
         $SqlCommand.Connection.add_InfoMessage($infoMessageScript)
 
         try {
-            $closeConnection = $false
+            # Define this here, outside of Use-DbRetry as it's within its own scope
+            if ($SqlCommand.Connection.State -ne "Open") {
+                $closeConnection = $true
+            } else {
+                $closeConnection = $false
+            }
+
             Use-DbRetry {
                 if ($SqlCommand.Connection.State -ne "Open") {
                     $SqlCommand.Connection.Open()
-                    $closeConnection = $true
                 }
 
                 switch ($OutputAs) {
@@ -322,7 +327,7 @@ function Get-DbData {
                     "PSCustomObject" {
                         foreach ($dataTable in $dataSet.Tables) {
                             foreach ($dataRow in $dataTable.Rows) {
-                                $pscustomobject = [ordered] @{}
+                                $pscustomobject = [ordered] @{ }
 
                                 foreach ($columnName in $dataTable.Columns.ColumnName) {
                                     if ($dataRow.$columnName -isnot [DBNull]) {

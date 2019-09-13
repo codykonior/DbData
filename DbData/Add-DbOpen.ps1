@@ -25,7 +25,7 @@ function Add-DbOpen {
     }
 
     process {
-       Add-Member -InputObject $SqlConnection -MemberType ScriptMethod -Name Open -Force -Value {
+        Add-Member -InputObject $SqlConnection -MemberType ScriptMethod -Name Open -Force -Value {
             $task = $this.OpenAsync()
 
             $result = $null
@@ -36,7 +36,7 @@ function Add-DbOpen {
                     $result = $task.Wait($this.ConnectionTimeout * 1000)
 
                     # It can take a little bit to mark completion
-                    if (!$task.IsCompleted) {
+                    if (-not $task.IsCompleted) {
                         Start-Sleep -Milliseconds 500
                     }
                 } catch {

@@ -19,9 +19,6 @@ A server instance to connect to, for example ".\SQL2016"
 .PARAMETER SqlCredential
 A SqlCredential containing the username and password for use with a ServerInstance.
 
-.PARAMETER ConnectionString
-A connection string.
-
 .PARAMETER SqlConnection
 A SqlConnection object.
 
@@ -31,8 +28,13 @@ Cache all possible data in a minimum of reads.
 .PARAMETER PreloadAg
 Only cache Availability Group data (otherwise this is extremely chatty).
 
+.PARAMETER Raw
+If you pass in a SqlConnection object by default it is used to construct a new one, this is required for SMO to automatically
+manage soft-closing the connection (as it sets a NonPooled property which cannot be modified). If you don't care about this
+behaviour this switch allows the use of the raw connection, just remember SMO won't close it.
+
 .INPUTS
-A server name, a connection string, or a connection object.
+A server name or a connection object.
 
 .OUTPUTS
 An SMO Server object.
@@ -46,18 +48,20 @@ function Get-DbSmo {
     [CmdletBinding(DefaultParameterSetName = "ServerInstance")]
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "")]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
-        [Alias("SqlServerName")]
-        [string] $ServerInstance,
-        [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 2)]
-        [Alias("Credential")]
-        $SqlCredential,
-
-        [Parameter(Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = "ConnectionString", Position = 1)]
-        [string] $ConnectionString,
-
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 1)]
         [System.Data.SqlClient.SqlConnection] $SqlConnection,
+
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
+        [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 2)]
+        [Alias("SqlServerName")]
+        [Alias("DataSource")]
+        [string] $ServerInstance,
+
+        [Alias("SqlCredential")]
+        $Credential,
+
+        [Parameter(ParameterSetName = "SqlConnection")]
+        [switch] $Raw,
 
         [switch] $Preload,
         [switch] $PreloadAg,
@@ -70,27 +74,27 @@ function Get-DbSmo {
     }
 
     process {
-        $parameterSetName = $PSCmdlet.ParameterSetName
-
-        # ServerConnection can be initialised with a server name, or a sql connection
-        switch ($parameterSetName) {
-            "ServerInstance" {
-                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ServerInstance $ServerInstance -SqlCredential $SqlCredential)
-            }
-            "ConnectionString" {
-                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection(New-DbConnection -ConnectionString $ConnectionString)
-            }
-            "SqlConnection" {
-                $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
-            }
+        if ($Raw -and $PSCmdlet.ParameterSetName -eq "SqlConnection") {
+            $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($SqlConnection)
+        } elseif ($Credential) {
+            $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($ServerInstance, $Credential.UserId, $Credential.Password)
+        } else {
+            $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($ServerInstance)
         }
+        # It instantiates its own connection but we'll still add our own Open logic to keep it enterprise-ready ;-)
+        Add-DbOpen $connection.SqlConnectionObject
 
         # Server can be initialised with either a server name or a serverconnection object
         $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 
         if ($Preload) {
             $smo.SetDefaultInitFields($true)
+            # Required in all cases due to SMO bugs
             $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
+            # Required for managed instances due to SMO bugs
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.Database], $false)
+            # This is huge so set it to lazy reading only
+            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.SystemMessage], $false)
         } elseif ($PreloadAg) {
             $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
             $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
@@ -99,10 +103,10 @@ function Get-DbSmo {
 
         Use-DbRetry {
             $smo.ConnectionContext.Connect() # Get ready
-            if (!$smo.Version) {
+            if (-not $smo.Version) {
                 Write-Error -Exception (New-Object System.Data.DataException("SMO connection silently failed"))
             }
-            $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it
+            $smo.ConnectionContext.Disconnect() # Keeps it in the pool, let SMO manage it (maybe)
             $smo
         } -RetryCount $RetryCount -RetrySeconds $RetrySeconds
     }

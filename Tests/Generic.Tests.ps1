@@ -64,7 +64,7 @@ Describe "Generic" {
 
             $newContent = $newContent -join [Environment]::NewLine
             if ($rewrite) {
-                if (!$Repair) {
+                if (-not $Repair) {
                     return $true
                 } else {
                     [System.IO.File]::WriteAllText($file.FullName, $newContent, [System.Text.UTF8Encoding] $false)
