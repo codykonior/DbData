@@ -87,21 +87,21 @@ function Get-DbSmo {
         # Server can be initialised with either a server name or a serverconnection object
         $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
 
-        if ($Preload) {
-            $smo.SetDefaultInitFields($true)
-            # Required in all cases due to SMO bugs
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
-            # Required for managed instances due to SMO bugs
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.Database], $false)
-            # This is huge so set it to lazy reading only
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.SystemMessage], $false)
-        } elseif ($PreloadAg) {
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
-            $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DatabaseReplicaState], $true)
-        }
-
         Use-DbRetry {
+            if ($Preload) {
+                $smo.SetDefaultInitFields($true)
+                # Required in all cases due to SMO bugs
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DataFile], $false)
+                # Required for managed instances due to SMO bugs
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.Database], $false)
+                # This is huge so set it to lazy reading only
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.SystemMessage], $false)
+            } elseif ($PreloadAg) {
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityGroup], $true)
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.AvailabilityReplica], $true)
+                $smo.SetDefaultInitFields([Microsoft.SqlServer.Management.Smo.DatabaseReplicaState], $true)
+            }
+
             $smo.ConnectionContext.Connect() # Get ready
             if (-not $smo.Version) {
                 Write-Error -Exception (New-Object System.Data.DataException("SMO connection silently failed"))

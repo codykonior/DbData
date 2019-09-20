@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - None.
 
+## [2.2.2] - 2019-09-20
+
+### Fixed
+
+- Get-DbSmo can throw an error when setting default fields even before a connection
+  has been established, I think because it can retrieve a bad connection from the
+  pool. So in this version I've moved that bit of code into the retry block.
+
 ## [2.2.1] - 2019-09-13
 
 ### Fixed
