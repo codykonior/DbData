@@ -20,7 +20,7 @@ The command or stored procedure name to execute.
 .PARAMETER Parameters
 A hash table of parameters to use in this query. This is done safely without concatenating strings or using variable substitution.
 
-.PARAMETER QueryTimeout
+.PARAMETER CommandTimeout
 Integer for the number of seconds to wait before expiring the query. If unspecified the .NET default is 30 seconds.
 
 This normally holds Severity 10 and lower information. If a higher severity error occurs as part of the batch then prior output is included in the Exception instead.

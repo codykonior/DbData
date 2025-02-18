@@ -26,34 +26,27 @@ function Add-DbOpen {
 
     process {
         Add-Member -InputObject $SqlConnection -MemberType ScriptMethod -Name Open -Force -Value {
+            # Infinite wait
+            if ($this.ConnectionTimeout -le 0) {
+                Write-Warning "Object [$($this.GetType().FullName)] connection [$($this.ConnectionString)] method [Open] has an infinite wait"
+                $wait = -1
+            } else {
+                $wait = $this.ConnectionTimeout * 1000
+            }
             $task = $this.OpenAsync()
 
             $result = $null
-            $exception = $null
+            try {
+                $result = $task.Wait($wait)
+            } catch {
+            }
 
-            do {
-                try {
-                    $result = $task.Wait($this.ConnectionTimeout * 1000)
-
-                    # It can take a little bit to mark completion
-                    if (-not $task.IsCompleted) {
-                        Start-Sleep -Milliseconds 500
-                    }
-                } catch {
-                    $exception = $_
-                }
-
-                # Pass on most detailed task exception available
-                if ($task.Exception) {
-                    if ($task.Exception.psobject.Properties["InnerException"] -and $task.Exception.InnerException) {
-                        throw $task.Exception.InnerException
-                    } else {
-                        throw $task.Exception
-                    }
-                } elseif ($exception) {
-                    throw $exception
-                }
-            } until ($result -or $exception)
+            if ($task.Exception) {
+                Write-Warning "Object [$($this.GetType().FullName)] connection [$($this.ConnectionString)] method [Open] threw an exception"
+                throw $task.Exception
+            } elseif (-not $result) {
+                throw "Object [$($this.GetType().FullName)] connection [$($this.ConnectionString)] method [Open] timed out"
+            }
         }
     }
 

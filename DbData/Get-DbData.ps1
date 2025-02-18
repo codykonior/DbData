@@ -121,7 +121,10 @@ function Get-DbData {
                     [void] $InfoMessageVariable.Add($_)
 
                     if ($_.Class -le 10) {
-                        "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
+                        if ($_.Number -ne 50000 -and $_.Class -ne 0 -and $_.State -ne 0) {
+                            "Msg {0}, Level {1}, State {2}, Line {3}" -f $_.Number, $_.Class, $_.State, $_.LineNumber
+                        }
+                        "{0}" -f $_.Message | Write-Verbose
                     } else {
                         # Should be Write-Error but it doesn't seem to trigger properly (after -FireInfoMessageEventOnUserErrors) and so it would otherwise up getting lost
                         "Msg {0}, Level {1}, State {2}, Line {3}$([Environment]::NewLine){4}" -f $_.Number, $_.Class, $_.State, $_.LineNumber, $_.Message | Write-Verbose
@@ -313,7 +316,9 @@ function Get-DbData {
                         break
                     }
                     "Scalar" {
-                        $scalar
+                        if ($scalar -isnot [DBNull]) {
+                            $scalar
+                        }
                         break
                     }
                     "DataRow" {
