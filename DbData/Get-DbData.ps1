@@ -20,10 +20,10 @@ An optional list of custom table names to use for the result set, in order. By d
 The type of data to return. It can be scalar (the first column of the first row of a result set), a non query (an integer), datarow, pscustomobject, datatable, or a dataset.
 
 .PARAMETER InfoMessageVariable
-An object of System.Collections.ArrayList which will be appended with all info message objects received while running the command, in addition to formatted versions written to the verbose stream.
+An object of System.Collections.Generic.List[object] which will be appended with all info message objects received while running the command, in addition to formatted versions written to the verbose stream.
 
 .PARAMETER Alter
-Fil the schema, create a command builder, and add an Alter function to the first returned table.
+Fill the schema, create a command builder, and add an Alter function to the first returned table.
 
 .PARAMETER AlterCollectionSeparator
 A character to join any non-string collections that are passed in when calling .Alter() on a table. For example, for joining @() and ArrayList. Empty collections are converted to DBNull.
@@ -69,7 +69,7 @@ The result is four rows, with the collections concatenated, and the special iden
 
 .EXAMPLE
 $serverInstance = ".\SQL2016"
-$infoMessage = New-Object System.Collections.ArrayList
+$infoMessage = New-Object System.Collections.Generic.List[object]
 New-DbConnection $serverInstance master | New-DbCommand "Print 'Moo';" | Get-DbData -As NonQuery -InfoMessageVariable $infoMessage | Out-Null
 $infoMessage
 
@@ -94,14 +94,14 @@ function Get-DbData {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [System.Data.SqlClient.SqlCommand] $SqlCommand,
+        [Microsoft.Data.SqlClient.SqlCommand] $SqlCommand,
         [string[]] $TableMapping = @(),
 
         [ValidateSet("NonQuery", "Scalar", "DataRow", "DataSet", "DataTable", "PSCustomObject")]
         [Alias("As")]
         $OutputAs = "PSCustomObject",
 
-        $InfoMessageVariable = (New-Object System.Collections.ArrayList),
+        $InfoMessageVariable = (New-Object System.Collections.Generic.List[object]),
 
         [switch] $Alter,
         $AlterCollectionSeparator = [Environment]::NewLine,
@@ -118,7 +118,7 @@ function Get-DbData {
             # Write-Error has been substituted for Write-Verbose here because otherwise it gets lost
             try {
                 $_ | Microsoft.PowerShell.Utility\Select-Object -ExpandProperty Errors | Microsoft.PowerShell.Core\ForEach-Object {
-                    [void] $InfoMessageVariable.Add($_)
+                    $InfoMessageVariable.Add($_)
 
                     if ($_.Class -le 10) {
                         if ($_.Number -ne 50000 -and $_.Class -ne 0 -and $_.State -ne 0) {
@@ -261,7 +261,7 @@ function Get-DbData {
                         break
                     }
                     default {
-                        $sqlDataAdapter = New-Object System.Data.SqlClient.SqlDataAdapter($SqlCommand)
+                        $sqlDataAdapter = New-Object Microsoft.Data.SqlClient.SqlDataAdapter($SqlCommand)
 
                         # Name the tables if they were passed in
                         for ($i = 0; $i -lt $TableMapping.Count; $i++) {
@@ -284,7 +284,7 @@ function Get-DbData {
                         # Add Insert/Update/Delete commands
                         if ($OutputAs -in "DataTable", "DataSet" -and $Alter -and $dataSet.Tables.Count -ne 0) {
                             try {
-                                New-DisposableObject ($commandBuilder = New-Object System.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
+                                New-DisposableObject ($commandBuilder = New-Object Microsoft.Data.SqlClient.SqlCommandBuilder($sqlDataAdapter)) {
                                     # Insert commands are the most likely to generate because they don't need a PK
                                     $sqlDataAdapter.InsertCommand = $commandBuilder.GetInsertCommand().Clone()
                                     if ($identityColumn = $dataSet.Tables[0].Columns | Where-Object { $_.AutoIncrement -eq $true }) {

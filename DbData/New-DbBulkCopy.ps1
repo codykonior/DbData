@@ -19,7 +19,7 @@ Bulk copy timeout.
 Pass the input on in the pipeline for further operations.
 
 .PARAMETER Options
-A combination of special options from System.Data.SqlClient.SqlBulkCopyOptions.
+A combination of special options from Microsoft.Data.SqlClient.SqlBulkCopyOptions.
 
 .INPUTS
 Pipe in the output of Get-DbData or similar.
@@ -30,7 +30,7 @@ Pipe in the output of Get-DbData or similar.
 .EXAMPLE
 $serverInstance = ".\SQL2016"
 New-DbConnection $serverInstance | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -As NonQuery | Out-Null
-$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTables -TableMapping @("Moo")
+$dbData = New-DbConnection $serverInstance | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTables -TableMapping @("Moo") -Alter
 $dbData.Alter(@{ B = "A" }) | Out-Null
 $dbData.Alter(@{ B = "B" }) | Out-Null
 $dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
@@ -59,7 +59,7 @@ function New-DbBulkCopy {
         [Alias("DataTable")]
         $Data,
 
-        [System.Data.SqlClient.SqlBulkCopyOptions] $Options = [System.Data.SqlClient.SqlBulkCopyOptions]::Default,
+        [Microsoft.Data.SqlClient.SqlBulkCopyOptions] $Options = [Microsoft.Data.SqlClient.SqlBulkCopyOptions]::Default,
         $Timeout,
         [switch] $PassThru,
 
@@ -76,21 +76,21 @@ function New-DbBulkCopy {
 
             try {
                 if ($InputObject -is [string]) {
-                    $bulkCopy = New-Object System.Data.SqlClient.SqlBulkCopy($InputObject, $Options)
-                } elseif ($InputObject -is [System.Data.SqlClient.SqlConnection]) {
+                    $bulkCopy = New-Object Microsoft.Data.SqlClient.SqlBulkCopy($InputObject, $Options)
+                } elseif ($InputObject -is [Microsoft.Data.SqlClient.SqlConnection]) {
                     if ($InputObject.State -ne "Open") {
                         $InputObject.Open()
                         $closeConnection = $true
                     }
 
-                    $bulkCopy = New-Object System.Data.SqlClient.SqlBulkCopy($InputObject, $Options, $null)
-                } elseif ($InputObject -is [System.Data.SqlClient.SqlCommand]) {
+                    $bulkCopy = New-Object Microsoft.Data.SqlClient.SqlBulkCopy($InputObject, $Options, $null)
+                } elseif ($InputObject -is [Microsoft.Data.SqlClient.SqlCommand]) {
                     if ($InputObject.Connection.State -ne "Open") {
                         $InputObject.Connection.Open()
                         $closeConnection = $true
                     }
 
-                    $bulkCopy = New-Object System.Data.SqlClient.SqlBulkCopy($InputObject.Connection, $Options, $InputObject.Transaction)
+                    $bulkCopy = New-Object Microsoft.Data.SqlClient.SqlBulkCopy($InputObject.Connection, $Options, $InputObject.Transaction)
                 } else {
                     Write-Error "InputObject was $($InputObject.GetType().FullName) which is an unsupported type"
                 }
@@ -111,16 +111,16 @@ function New-DbBulkCopy {
                     # Required in case we've added columns, they will not be in order, and as long As you specify the names here it will all work okay
                     $bulkCopy.ColumnMappings.Clear()
                     $table.Columns | ForEach-Object {
-                        [void] $bulkCopy.ColumnMappings.Add((New-Object System.Data.SqlClient.SqlBulkCopyColumnMapping($_.ColumnName, $_.ColumnName)))
+                        [void] $bulkCopy.ColumnMappings.Add((New-Object Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping($_.ColumnName, $_.ColumnName)))
                     }
                     $bulkCopy.WriteToServer($table)
                 }
                 $bulkCopy.Close()
             } finally {
                 if ($closeConnection) {
-                    if ($InputObject -is [System.Data.SqlClient.SqlConnection] -and $InputObject.State -eq "Open") {
+                    if ($InputObject -is [Microsoft.Data.SqlClient.SqlConnection] -and $InputObject.State -eq "Open") {
                         $InputObject.Close()
-                    } elseif ($InputObject -is [System.Data.SqlClient.SqlCommand] -and $InputObject.Connection.State -eq "Open") {
+                    } elseif ($InputObject -is [Microsoft.Data.SqlClient.SqlCommand] -and $InputObject.Connection.State -eq "Open") {
                         $InputObject.Connection.Close()
                     }
                 }

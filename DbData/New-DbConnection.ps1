@@ -22,10 +22,10 @@ For SQL Authentication. Otherwise Integrated Security is used.
 For SQL Authentication. Otherwise Integrated Security is used.
 
 .PARAMETER SqlCredential
-As of .NET Framework 4.5 the preferred method of passing SQL Authentication credentials is using System.Data.SqlClient.SqlCredential. PSCredentials will be converted to this automatically. This is added to the connection object, and so, cannot be used if you are requesting only a connection string.
+As of .NET Framework 4.5 the preferred method of passing SQL Authentication credentials is using Microsoft.Data.SqlClient.SqlCredential. PSCredentials will be converted to this automatically. This is added to the connection object, and so, cannot be used if you are requesting only a connection string.
 
 .PARAMETER IntegratedSecurity
-Enabled automatically if no UserID, Password, or SqlCredential is passed in. However you can explicitly set it also.
+Should set explicitly if no UserID, Password, or SqlCredential is passed in.
 
 .PARAMETER ApplicationName
 Free text recorded by SQL Server so that DBAs can identify what a session is being used for. Also useful for connection pooling.
@@ -51,6 +51,9 @@ A connection string to start off with.
 .PARAMETER Open
 Open the connection for you before returning it. Make sure you close it at some stage.
 
+.PARAMETER OverrideOpen
+This enables the open async functionality. It should not be necessary anymore.
+
 .INPUTS
 None. You cannot pipe objects.
 
@@ -75,7 +78,7 @@ Data Source=.\SQL2016;Initial Catalog=master;User ID=some_user;Password=unsafe_p
 For descriptions of other parameter values please check MSDN.
 
 .LINK
-https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlconnectionstringbuilder%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396
+https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlconnectionstringbuilder?view=sqlclient-dotnet-standard-5.2
 
 #>
 
@@ -92,6 +95,17 @@ function New-DbConnection {
         $ApplicationName,
         $AsynchronousProcessing,
         $AttachDBFilename,
+        [ValidateSet(
+            "SqlPassword",
+            "ActiveDirectoryPassword",
+            "ActiveDirectoryIntegrated",
+            "ActiveDirectoryInteractive",
+            "ActiveDirectoryServicePrincipal",
+            "ActiveDirectoryDeviceCodeFlow",
+            "ActiveDirectoryManagedIdentity",
+            "ActiveDirectoryMSI",
+            "ActiveDirectoryDefault"
+        )]
         $Authentication,
         $BrowsableConnectionString,
         $ColumnEncryptionSetting,
@@ -103,6 +117,7 @@ function New-DbConnection {
         $CurrentLanguage,
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName, Position = 0)]
         [ValidateNotNullOrEmpty()]
+        [Alias("ServerName")]
         [Alias("SqlServerName")]
         [Alias("ServerInstance")]
         [string] $DataSource,
@@ -137,22 +152,27 @@ function New-DbConnection {
         [Alias("ComputerName")]
         [Alias("HostName")]
         [string] $WorkstationID,
+        $AccessToken,
         $ConnectionString,
 
         [Alias("Credential")]
         $SqlCredential,
         [switch] $AsString,
         [switch] $Open,
-        [switch] $FireInfoMessageEventOnUserErrors
+        [switch] $FireInfoMessageEventOnUserErrors,
+        [switch] $OverrideOpen
     )
 
     begin {
     }
 
     process {
-        $connectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
+        $connectionBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
 
         if ($PSBoundParameters.ContainsKey("DataSource")) {
+            if ($Authentication -eq "ActiveDirectoryDefault" -and $DataSource -notlike "*.database.windows.net") {
+                $DataSource = $DataSource + ".database.windows.net"
+            }
             $connectionBuilder["Data Source"] = $DataSource
         }
         if ($PSBoundParameters.ContainsKey("FailoverPartner")) {
@@ -254,11 +274,11 @@ function New-DbConnection {
         if ($PSBoundParameters.ContainsKey("ColumnEncryptionSetting")) {
             $connectionBuilder["Column Encryption Setting"] = $ColumnEncryptionSetting
         }
-
-        if (-not ($UserID -or $SqlCredential)) {
+<#
+        if (-not ($UserID -or $SqlCredential -or $Authentication -or $AccessToken)) {
             $connectionBuilder["Integrated Security"] = $true
         }
-
+#>
         if ($AsString) {
             # If we're returning a string we have no choice but to give input UserID and Password
             if ($PSBoundParameters.ContainsKey("UserID")) {
@@ -270,14 +290,20 @@ function New-DbConnection {
 
             $connectionBuilder.ConnectionString
         } else {
-            $sqlConnection = New-Object System.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
-            Add-DbOpen $sqlConnection
-
+            $sqlConnection = New-Object Microsoft.Data.SqlClient.SqlConnection($connectionBuilder.ConnectionString)
+            if ($PSBoundParameters.ContainsKey("AccessToken")) {
+                $sqlConnection.AccessToken = $AccessToken
+            }
+    
+            if ($OverrideOpen) {
+                Add-DbOpen $sqlConnection
+            }
+            
             if ($PSBoundParameters.ContainsKey("SqlCredential")) {
                 # Convert Credential to SqlCredential
                 if ($SqlCredential -is [System.Management.Automation.PSCredential]) {
                     $SqlCredential.Password.MakeReadOnly()
-                    $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
+                    $SqlCredential = New-Object Microsoft.Data.SqlClient.SqlCredential($SqlCredential.UserName, $SqlCredential.Password)
                 }
                 $SqlConnection.Credential = $SqlCredential
             } elseif ($PSBoundParameters.ContainsKey("UserID")) {
@@ -288,7 +314,7 @@ function New-DbConnection {
                     $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
                 }
                 $securePassword.MakeReadOnly()
-                $SqlCredential = New-Object System.Data.SqlClient.SqlCredential($UserID, $securePassword)
+                $SqlCredential = New-Object Microsoft.Data.SqlClient.SqlCredential($UserID, $securePassword)
                 $SqlConnection.Credential = $SqlCredential
             }
 

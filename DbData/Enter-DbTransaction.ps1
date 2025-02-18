@@ -53,7 +53,7 @@ function Enter-DbTransaction {
     }
 
     process {
-        if ($InputObject -is [System.Data.SqlClient.SqlCommand]) {
+        if ($InputObject -is [Microsoft.Data.SqlClient.SqlCommand]) {
             $sqlCommand = $InputObject
         } elseif ($InputObject -is [System.Data.DataTable]) {
             $sqlCommand = $InputObject.SqlDataAdapter.SelectCommand

@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2025-02-18
 
-- None.
+### Changed
+
+This is an experimental branch and you can't just switch to it easily. I'd recommend sticking with 2.2.2.
+
+- Switches from System.Data to Microsoft.Data libraries.
+- Get-DbData -InfoMessageVariable is now of type System.Collections.Generic.List[object]
+- Get-DbData does not override Open() on connections by default as it shouldn't be necessary anymore.
+- New-DbConnection doesn't default to Integrated Security anymore. You must start specifying the -Authentication method.
+- New-DbConnection allows Microsoft Entra ID authentication to Azure systems.
+
+### Fixed
+
+- Use-DbRetry had a lot of problems which should be gone now.
 
 ## [2.2.2] - 2019-09-20
 

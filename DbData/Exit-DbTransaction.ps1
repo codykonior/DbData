@@ -60,11 +60,11 @@ function Exit-DbTransaction {
     }
 
     process {
-        if ($InputObject -is [System.Data.SqlClient.SqlCommand]) {
+        if ($InputObject -is [Microsoft.Data.SqlClient.SqlCommand]) {
             $sqlCommand = $InputObject
-        } elseif ($InputObject -is [System.Data.DataTable]) {
+        } elseif ($InputObject -is [Microsoft.Data.DataTable]) {
             $sqlCommand = $InputObject.SqlDataAdapter.SelectCommand
-        } elseif ($InputObject -is [System.Data.DataSet]) {
+        } elseif ($InputObject -is [Microsoft.Data.DataSet]) {
             $sqlCommand = $InputObject.Tables[0].SqlDataAdapter.SelectCommand
         } else {
             Write-Error "InputObject must be an SqlCommand with an SqlConnection, a DataTable, or a DataSet."
