@@ -8,7 +8,7 @@ param (
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Constrained endpoint compatibility
+# These are for constrained endpoint compatibility.
 Set-Alias -Name Exit-PSSession -Value Microsoft.PowerShell.Core\Exit-PSSession
 Set-Alias -Name Get-Command -Value Microsoft.PowerShell.Core\Get-Command
 Set-Alias -Name Get-FormatData -Value Microsoft.PowerShell.Utility\Get-FormatData
@@ -27,16 +27,8 @@ if ($Debugging) {
         }
     }
 } else {
-    if (Test-Path "$PSScriptRoot\Optimize.ps1") {
-        $scriptBlock = [System.IO.File]::ReadAllText("$PSScriptRoot\Optimize.ps1")
-    } else {
-        $scriptBlock = Get-ChildItem $PSScriptRoot "*-*.ps1" -Recurse -Exclude "*.Steps.ps1", "*.Tests.ps1", "*.ps1xml" | ForEach-Object {
-            [System.IO.File]::ReadAllText($_.FullName)
-        }
+    $scriptBlock = Get-ChildItem $PSScriptRoot "*-*.ps1" -Recurse -Exclude "*.Steps.ps1", "*.Tests.ps1", "*.ps1xml" | ForEach-Object {
+        [System.IO.File]::ReadAllText($_.FullName)
     }
     $ExecutionContext.InvokeCommand.InvokeScript($false, [scriptblock]::Create($scriptBlock), $null, $null)
-}
-
-if ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.Location -like "C:\Windows\assembly\*Sql*.dll" }) {
-    Write-Warning "SMO DLLs have been loaded from the GAC which may lead to obscure errors"
 }
