@@ -156,6 +156,11 @@ function New-DbConnection {
     [CmdletBinding()]
     param (
         [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias("ServerName")]
+        [Alias("ServerInstance")]
+        [Alias("FullyQualifiedDomainName")]
+        [string] $DataSource,
+        [Parameter(ValueFromPipelineByPropertyName)]
         [Alias("DatabaseName")]
         [string] $InitialCatalog,
         [Parameter(ValueFromPipelineByPropertyName)]
@@ -166,11 +171,6 @@ function New-DbConnection {
         [int] $LoadBalanceTimeout,
         [bool] $MultipleActiveResultSets,
         [bool] $MultiSubnetFailover,
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [Alias("ServerName")]
-        [Alias("ServerInstance")]
-        [Alias("FullyQualifiedDomainName")]
-        [string] $DataSource,
         [Microsoft.Data.SqlClient.PoolBlockingPeriod] $PoolBlockingPeriod,
         [string] $FailoverPartner,
         [string] $CurrentLanguage,
@@ -271,22 +271,27 @@ function New-DbConnection {
         if ($PSBoundParameters.ContainsKey("TypeSystemVersion")) { $connectionStringBuilder."Type System Version" = $TypeSystemVersion }
 
         if ($Callback) {
-            &$Callback $connectionStringBuilder
+            &$Callback -ConnectionStringBuilder $connectionStringBuilder
         }
 
-        $sqlConnection = New-Object Microsoft.Data.SqlClient.SqlConnection($connectionStringBuilder.ToString())
+        $connection = New-Object Microsoft.Data.SqlClient.SqlConnection($connectionStringBuilder.ToString())
+        $connection | Add-Member -MemberType NoteProperty -Name ConnectionStringBuilder -Value $connectionStringBuilder
 
-        if ($PSBoundParameters.ContainsKey("RetryLogicProvider")) { $sqlConnection.RetryLogicProvider = $RetryLogicProvider }
-        if ($PSBoundParameters.ContainsKey("StatisticsEnabled")) { $sqlConnection.StatisticsEnabled = $StatisticsEnabled }
-        if ($PSBoundParameters.ContainsKey("ConnectionString")) { $sqlConnection.ConnectionString = $ConnectionString }
-        if ($PSBoundParameters.ContainsKey("AccessToken")) { $sqlConnection.AccessToken = $AccessToken }
-        if ($PSBoundParameters.ContainsKey("Credential")) { $sqlConnection.Credential = $Credential }
-        if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) { $sqlConnection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors }
-        if ($PSBoundParameters.ContainsKey("InfoMessage")) { $sqlConnection.InfoMessage = $InfoMessage }
-        if ($PSBoundParameters.ContainsKey("StateChange")) { $sqlConnection.StateChange = $StateChange }
-        if ($PSBoundParameters.ContainsKey("Disposed")) { $sqlConnection.Disposed = $Disposed }
+        if ($PSBoundParameters.ContainsKey("RetryLogicProvider")) { $connection.RetryLogicProvider = $RetryLogicProvider }
+        if ($PSBoundParameters.ContainsKey("StatisticsEnabled")) { $connection.StatisticsEnabled = $StatisticsEnabled }
+        if ($PSBoundParameters.ContainsKey("ConnectionString")) { $connection.ConnectionString = $ConnectionString }
+        if ($PSBoundParameters.ContainsKey("AccessToken")) { $connection.AccessToken = $AccessToken }
+        if ($PSBoundParameters.ContainsKey("Credential")) { $connection.Credential = $Credential }
+        if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) { $connection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors }
+        if ($PSBoundParameters.ContainsKey("InfoMessage")) { $connection.InfoMessage = $InfoMessage }
+        if ($PSBoundParameters.ContainsKey("StateChange")) { $connection.StateChange = $StateChange }
+        if ($PSBoundParameters.ContainsKey("Disposed")) { $connection.Disposed = $Disposed }
 
-        $sqlConnection | Add-Member -MemberType NoteProperty -Name ConnectionStringBuilder -Value { $this.ConnectionStringBuilder } -PassThru
+        if ($Callback) {
+            &$Callback -Connection $connection
+        }
+
+        $connection
     }
 
     end {

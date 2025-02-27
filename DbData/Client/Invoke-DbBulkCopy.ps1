@@ -45,7 +45,7 @@ function Invoke-DbBulkCopy {
     }
 
     process {
-        $sqlBulkCopy = New-Object System.Data.SqlClient.SqlBulkCopy($Connection, $CopyOptions, $Transaction)
+        $sqlBulkCopy = New-Object Microsoft.Data.SqlClient.SqlBulkCopy($Connection, $CopyOptions, $Transaction)
 
         if ($PSBoundParameters.ContainsKey("BatchSize")) { $sqlBulkCopy.BatchSize = $BatchSize }
         if ($PSBoundParameters.ContainsKey("BulkCopyTimeout")) { $sqlBulkCopy.BulkCopyTimeout = $BulkCopyTimeout }
@@ -54,9 +54,9 @@ function Invoke-DbBulkCopy {
         if ($PSBoundParameters.ContainsKey("NotifyAfter")) { $sqlBulkCopy.NotifyAfter = $NotifyAfter }
         if ($PSBoundParameters.ContainsKey("SqlRowsCopied")) { $sqlBulkCopy.SqlRowsCopied = $SqlRowsCopied }
 
-        $originalSqlConnectionState = $SqlConnection.State
+        $originalConnectionState = $SqlConnection.State
         try {
-            if ($originalSqlConnectionState -ne "Open") {
+            if ($originalConnectionState -ne "Open") {
                 $SqlConnection.Open()
             }
 
@@ -67,7 +67,9 @@ function Invoke-DbBulkCopy {
             }
 
             foreach ($dataTable in $dataTables) {
-                $sqlBulkCopy.DestinationTableName = $dataTable.TableName
+                if (-not $PSBoundParameters.ContainsKey("DestinationTableName")) {
+                    $sqlBulkCopy.DestinationTableName = $dataTable.TableName
+                }
 
                 # Required in case we've added columns, they will not be in order, and as long As you specify the names here it will all work okay
                 $sqlBulkCopy.ColumnMappings.Clear()
@@ -78,8 +80,8 @@ function Invoke-DbBulkCopy {
             }
             $sqlBulkCopy.Close()
         } finally {
-            if ($originalSqlConnectionState -ne "Open" -and $SqlCommand.Connection.State -eq "Open") {
-                $SqlConnection.Close()
+            if ($originalConnectionState -ne "Open" -and $Connection.State -eq "Open") {
+                $Connection.Close()
             }
         }
     }
