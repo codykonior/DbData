@@ -1,27 +1,28 @@
 <#
 
 .SYNOPSIS
+Lets you efficiently bulk load a SQL Server table with data from another source.
 
 .DESCRIPTION
 
 
 .PARAMETER BatchSize
-
+Number of rows in each batch. At the end of each batch, the rows in the batch are sent to the server.
 
 .PARAMETER BulkCopyTimeout
-
+Number of seconds for the operation to complete before it times out.
 
 .PARAMETER EnableStreaming
-
+Enables or disables a SqlBulkCopy object to stream data from an IDataReader object. The .NET default is False.
 
 .PARAMETER DestinationTableName
-
+Name of the destination table on the server.
 
 .PARAMETER NotifyAfter
-
+Defines the number of rows to be processed before generating a notification event.
 
 .PARAMETER SqlRowsCopied
-Event.
+Event. Occurs every time that the number of rows specified by the NotifyAfter property have been processed.
 
 .INPUTS
 

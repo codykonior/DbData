@@ -1,39 +1,40 @@
 <#
 
 .SYNOPSIS
+Represents a Transact-SQL statement or stored procedure to execute against a SQL Server database.
 
 .DESCRIPTION
 
 .PARAMETER Connection
-Gets or sets the SqlConnection used by this instance of the SqlCommand.
+The SqlConnection used by this instance of the SqlCommand.
 
 .PARAMETER RetryLogicProvider
-
+Specifies the SqlRetryLogicBaseProvider object bound to this command.
 
 .PARAMETER Notification
-Gets or sets a value that specifies the SqlNotificationRequest object bound to this command.
+Specifies the SqlNotificationRequest object bound to this command.
 
 .PARAMETER Transaction
-Gets or sets the SqlTransaction within which the SqlCommand executes.
+The SqlTransaction within which the SqlCommand executes.
 
 .PARAMETER CommandText
-Gets or sets the Transact-SQL statement, table name or stored procedure to execute at the data source.
+The Transact-SQL statement, table name or stored procedure to execute at the data source.
 
 .PARAMETER CommandTimeout
-Gets or sets the wait time (in seconds) before terminating the attempt to execute a command and generating an error.
+The wait time (in seconds) before terminating the attempt to execute a command and generating an error.
 
 .PARAMETER CommandType
-Gets or sets a value indicating how the CommandText property is to be interpreted. Text is the .NET default.
+Indicates how the CommandText property is to be interpreted. Text is the .NET default.
 
 Text = An SQL text command. (Default.)
 StoredProcedure	= The name of a stored procedure.
 TableDirect	= The name of a table.
 
 .PARAMETER EnableOptimizedParameterBinding
-
+Indicates whether the command object should optimize parameter performance by disabling Output and InputOutput directions when submitting the command to the SQL Server. The .NET default is False.
 
 .PARAMETER UpdatedRowSource
-Gets or sets how command results are applied to the DataRow when used by the Update method of the DbDataAdapter.
+How command results are applied to the DataRow when used by the Update method of the DbDataAdapter.
 
 None = Any returned parameters or rows are ignored.
 OutputParameters = Output parameters are mapped to the changed row in the DataSet.
