@@ -2,12 +2,18 @@
 .PARAMETER SqlCommand
 
 
-.PARAMETER TableMapping
-
 .PARAMETER OutputAs
 
 
 --
+
+.PARAMETER SchemaType
+Used when performing FillSchema(). You would almost always want to use Mappped.
+
+Source = Ignore any TableMappings on the SqlDataAdapter.
+Mapped = Applying existing TableMappings to the incoming schema.
+
+.PARAMETER SelectCommand
 
 
 .PARAMETER DeleteCommand
@@ -16,50 +22,61 @@
 .PARAMETER InsertCommand
 
 
-.PARAMETER SelectCommand
-
-
 .PARAMETER UpdateCommand
 
 
-.PARAMETER UpdateBatchSize
-
-
 .PARAMETER AcceptChangesDuringFill
-
+Gets or sets a value indicating whether AcceptChanges() is called on a DataRow after it is added to the DataTable during any of the Fill operations.
 
 .PARAMETER AcceptChangesDuringUpdate
-
+Gets or sets whether AcceptChanges() is called during a Update(DataSet).
 
 .PARAMETER ContinueUpdateOnError
-
+Gets or sets a value that specifies whether to generate an exception when an error is encountered during a row update.
 
 .PARAMETER FillLoadOption
+Gets or sets the LoadOption that determines how the adapter fills the DataTable from the DbDataReader.
 
+OverwriteChanges = The incoming values for this row will be written to both the current value and the original value versions of the data for each column.
+PreserveChanges	= The incoming values for this row will be written to the original value version of each column. The current version of the data in each column will not be changed. This is the default.
+Upsert = The incoming values for this row will be written to the current version of each column. The original version of each column's data will not be changed.
 
 .PARAMETER MissingMappingAction
+Determines the action to take when incoming data does not have a matching table or column. Passthrough is the .NET default.
 
+Passthrough = The source column or source table is created and added to the DataSet using its original name.
+Ignore = The column or table not having a mapping is ignored. Returns null.
+Error = An InvalidOperationException is generated if the specified column mapping is missing.
 
 .PARAMETER MissingSchemaAction
+Determines the action to take when existing DataSet schema does not match incoming data. Add is the .NET default.
 
+Add	= Adds the necessary columns to complete the schema.
+Ignore = Ignores the extra columns.
+Error = An InvalidOperationException is generated if the specified column mapping is missing.
+AddWithKey = Adds the necessary columns and primary key information to complete the schema.
 
 .PARAMETER ReturnProviderSpecificTypes
+Gets or sets whether the Fill method should return provider-specific values or common CLS-compliant values.
 
+.PARAMETER UpdateBatchSize
+Gets or sets the number of rows that are processed in each round-trip to the server.
 
-.PARAMETER RowUpdated
-Event.
+0 = There is no limit on the batch size.
+1 = Disables batch updating.
+>1 = Changes are sent using batches of UpdateBatchSize operations at a time.
 
-.PARAMETER RowUpdating
-Event.
-
+.PARAMETER TableMappings
+An ordered array of table names to use in the DataSet. Tables from the data source will be given these names in the DataSet.
 
 .PARAMETER FillError
-Event.
+Event. Returned when an error occurs during a fill operation.
 
-.PARAMETER Disposed
-Event.
+.PARAMETER RowUpdated
+Event. Occurs during Update(DataSet) after a command is executed against the data source. The attempt to update is made, so the event fires.
 
-.PARAMETER SchemaType
+.PARAMETER RowUpdating
+Event. Occurs during Update(DataSet) before a command is executed against the data source. The attempt to update is made, so the event fires.
 
 #>
 function Invoke-DbCommand {
@@ -67,18 +84,17 @@ function Invoke-DbCommand {
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
         [Microsoft.Data.SqlClient.SqlCommand] $SqlCommand,
-        [string[]] $TableMapping = @(),
 
         [ValidateSet("NonQuery", "Scalar", "DataRow", "DataSet", "DataTable", "PSCustomObject")]
         [ValidateNotNullOrEmpty()]
         [Alias("As")]
         $OutputAs = "PSCustomObject",
 
+        [Microsoft.Data.SqlClient.SqlCommand] $SelectCommand,
         [Microsoft.Data.SqlClient.SqlCommand] $DeleteCommand,
         [Microsoft.Data.SqlClient.SqlCommand] $InsertCommand,
-        [Microsoft.Data.SqlClient.SqlCommand] $SelectCommand,
         [Microsoft.Data.SqlClient.SqlCommand] $UpdateCommand,
-        [int] $UpdateBatchSize,
+
         [bool] $AcceptChangesDuringFill,
         [bool] $AcceptChangesDuringUpdate,
         [bool] $ContinueUpdateOnError,
@@ -86,10 +102,13 @@ function Invoke-DbCommand {
         [System.Data.MissingMappingAction] $MissingMappingAction,
         [System.Data.MissingSchemaAction] $MissingSchemaAction,
         [bool] $ReturnProviderSpecificTypes,
+        [string[]] $TableMappings = @(),
+        [int] $UpdateBatchSize,
+
+        # FROM SqlDataAdapter
+        [System.Management.Automation.PSEvent] $FillError,
         [System.Management.Automation.PSEvent] $RowUpdated,
         [System.Management.Automation.PSEvent] $RowUpdating,
-        [System.Management.Automation.PSEvent] $FillError,
-        [System.Management.Automation.PSEvent] $Disposed,
 
         [System.Data.SchemaType] $SchemaType,
 
@@ -223,6 +242,7 @@ function Invoke-DbCommand {
             if ($PSBoundParameters.ContainsKey("SelectCommand")) { $sqlDataAdapter.SelectCommand = $SelectCommand }
             if ($PSBoundParameters.ContainsKey("UpdateCommand")) { $sqlDataAdapter.UpdateCommand = $UpdateCommand }
             if ($PSBoundParameters.ContainsKey("UpdateBatchSize")) { $sqlDataAdapter.UpdateBatchSize = $UpdateBatchSize }
+
             if ($PSBoundParameters.ContainsKey("AcceptChangesDuringFill")) { $sqlDataAdapter.AcceptChangesDuringFill = $AcceptChangesDuringFill }
             if ($PSBoundParameters.ContainsKey("AcceptChangesDuringUpdate")) { $sqlDataAdapter.AcceptChangesDuringUpdate = $AcceptChangesDuringUpdate }
             if ($PSBoundParameters.ContainsKey("ContinueUpdateOnError")) { $sqlDataAdapter.ContinueUpdateOnError = $ContinueUpdateOnError }
@@ -233,11 +253,10 @@ function Invoke-DbCommand {
             if ($PSBoundParameters.ContainsKey("RowUpdated")) { $sqlDataAdapter.RowUpdated = $RowUpdated }
             if ($PSBoundParameters.ContainsKey("RowUpdating")) { $sqlDataAdapter.RowUpdating = $RowUpdating }
             if ($PSBoundParameters.ContainsKey("FillError")) { $sqlDataAdapter.FillError = $FillError }
-            if ($PSBoundParameters.ContainsKey("Disposed")) { $sqlDataAdapter.Disposed = $Disposed }
 
             # Name the tables if they were passed in
-            for ($i = 0; $i -lt $TableMapping.Count; $i++) {
-                [void] $sqlDataAdapter.TableMappings.Add("Table$(if ($i -ne 0) { $i })", $TableMapping[$i])
+            for ($i = 0; $i -lt $TableMappings.Count; $i++) {
+                [void] $sqlDataAdapter.TableMappings.Add("Table$(if ($i -ne 0) { $i })", $TableMappings[$i])
             }
 
             $dataSet = New-Object System.Data.DataSet

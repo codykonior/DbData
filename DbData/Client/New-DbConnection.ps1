@@ -146,9 +146,6 @@ Event.
 .PARAMETER StateChange
 Event.
 
-.PARAMETER Disposed
-Event.
-
 .PARAMETER Callback
 
 #>
@@ -218,8 +215,6 @@ function New-DbConnection {
         [System.Management.Automation.PSEvent] $InfoMessage,
         [Parameter(ValueFromPipelineByPropertyName)]
         [System.Management.Automation.PSEvent] $StateChange,
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [System.Management.Automation.PSEvent] $Disposed,
 
         $Callback
     )
@@ -285,7 +280,6 @@ function New-DbConnection {
         if ($PSBoundParameters.ContainsKey("FireInfoMessageEventOnUserErrors")) { $connection.FireInfoMessageEventOnUserErrors = $FireInfoMessageEventOnUserErrors }
         if ($PSBoundParameters.ContainsKey("InfoMessage")) { $connection.InfoMessage = $InfoMessage }
         if ($PSBoundParameters.ContainsKey("StateChange")) { $connection.StateChange = $StateChange }
-        if ($PSBoundParameters.ContainsKey("Disposed")) { $connection.Disposed = $Disposed }
 
         if ($Callback) {
             &$Callback -Connection $connection

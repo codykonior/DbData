@@ -29,13 +29,7 @@
 .PARAMETER UpdatedRowSource
 
 
-.PARAMETER Site
-
-
 .PARAMETER StatementCompleted
-Event.
-
-.PARAMETER Disposed
 Event.
 
 #>
@@ -48,7 +42,7 @@ function New-DbCommand {
         [Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider] $RetryLogicProvider,
         [Microsoft.Data.Sql.SqlNotificationRequest] $Notification,
         [Microsoft.Data.SqlClient.SqlTransaction] $Transaction,
-        [Parameter(Mandatory, Position=0)]
+        [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [string] $CommandText,
         [int] $CommandTimeout,
@@ -56,7 +50,6 @@ function New-DbCommand {
         [bool] $EnableOptimizedParameterBinding,
         [System.Data.UpdateRowSource] $UpdatedRowSource,
         [System.Management.Automation.PSEvent] $StatementCompleted,
-        [System.Management.Automation.PSEvent] $Disposed,
 
         [Hashtable] $SqlParameters = @{}
     )
@@ -78,9 +71,7 @@ function New-DbCommand {
         if ($PSBoundParameters.ContainsKey("DesignTimeVisible")) { $sqlCommand.DesignTimeVisible = $DesignTimeVisible }
         if ($PSBoundParameters.ContainsKey("EnableOptimizedParameterBinding")) { $sqlConnection.EnableOptimizedParameterBinding = $EnableOptimizedParameterBinding }
         if ($PSBoundParameters.ContainsKey("UpdatedRowSource")) { $sqlConnection.UpdatedRowSource = $UpdatedRowSource }
-        if ($PSBoundParameters.ContainsKey("Site")) { $sqlConnection.Site = $Site }
         if ($PSBoundParameters.ContainsKey("StatementCompleted")) { $sqlConnection.StatementCompleted = $StatementCompleted }
-        if ($PSBoundParameters.ContainsKey("Disposed")) { $sqlConnection.Disposed = $Disposed }
 
         foreach ($sqlParameterName in $SqlParameters.Keys) {
             # It's not safe to call the shortcut constructor because of boxing issues

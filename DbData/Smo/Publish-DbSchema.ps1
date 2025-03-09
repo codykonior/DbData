@@ -215,7 +215,6 @@ function Publish-DbSchema {
                 }
             }
 
-            # TODO
             foreach ($dataTable in $DataSet.Tables) {
                 $table = New-Object Microsoft.SqlServer.Management.Smo.Table($database, $dataTable.TableName, $SchemaName)
                 $table.Refresh() # This will fill the schema from the database
