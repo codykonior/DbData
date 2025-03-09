@@ -1,6 +1,16 @@
 <#
 
+.SYNOPSIS
+
+.DESCRIPTION
+
 .PARAMETER ComputerName
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
 
 #>
 

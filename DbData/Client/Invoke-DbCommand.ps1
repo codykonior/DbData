@@ -1,4 +1,9 @@
 <#
+
+.SYNOPSIS
+
+.DESCRIPTION
+
 .PARAMETER SqlCommand
 
 
@@ -77,6 +82,12 @@ Event. Occurs during Update(DataSet) after a command is executed against the dat
 
 .PARAMETER RowUpdating
 Event. Occurs during Update(DataSet) before a command is executed against the data source. The attempt to update is made, so the event fires.
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
 
 #>
 function Invoke-DbCommand {

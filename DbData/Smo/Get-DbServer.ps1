@@ -1,3 +1,18 @@
+<#
+
+.SYNOPSIS
+
+.DESCRIPTION
+
+.PARAMETER
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
+
+#>
 function Get-DbServer {
     [CmdletBinding()]
     param (

@@ -1,36 +1,53 @@
 <#
-.PARAMETER Connection
 
+.SYNOPSIS
+
+.DESCRIPTION
+
+.PARAMETER Connection
+Gets or sets the SqlConnection used by this instance of the SqlCommand.
 
 .PARAMETER RetryLogicProvider
 
 
 .PARAMETER Notification
-
+Gets or sets a value that specifies the SqlNotificationRequest object bound to this command.
 
 .PARAMETER Transaction
-
+Gets or sets the SqlTransaction within which the SqlCommand executes.
 
 .PARAMETER CommandText
-
+Gets or sets the Transact-SQL statement, table name or stored procedure to execute at the data source.
 
 .PARAMETER CommandTimeout
-
+Gets or sets the wait time (in seconds) before terminating the attempt to execute a command and generating an error.
 
 .PARAMETER CommandType
+Gets or sets a value indicating how the CommandText property is to be interpreted. Text is the .NET default.
 
-
-.PARAMETER DesignTimeVisible
-
+Text = An SQL text command. (Default.)
+StoredProcedure	= The name of a stored procedure.
+TableDirect	= The name of a table.
 
 .PARAMETER EnableOptimizedParameterBinding
 
 
 .PARAMETER UpdatedRowSource
+Gets or sets how command results are applied to the DataRow when used by the Update method of the DbDataAdapter.
 
+None = Any returned parameters or rows are ignored.
+OutputParameters = Output parameters are mapped to the changed row in the DataSet.
+FirstReturnedRecord	= The data in the first returned row is mapped to the changed row in the DataSet.
+Both = Both the output parameters and the first returned row are mapped to the changed row in the DataSet.
 
 .PARAMETER StatementCompleted
-Event.
+Event. Occurs when the execution of a Transact-SQL statement completes.
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
 
 #>
 function New-DbCommand {
@@ -68,7 +85,6 @@ function New-DbCommand {
         if ($PSBoundParameters.ContainsKey("CommandText")) { $sqlCommand.CommandText = $CommandText }
         if ($PSBoundParameters.ContainsKey("CommandTimeout")) { $sqlCommand.CommandTimeout = $CommandTimeout }
         if ($PSBoundParameters.ContainsKey("CommandType")) { $sqlCommand.CommandType = $CommandType }
-        if ($PSBoundParameters.ContainsKey("DesignTimeVisible")) { $sqlCommand.DesignTimeVisible = $DesignTimeVisible }
         if ($PSBoundParameters.ContainsKey("EnableOptimizedParameterBinding")) { $sqlConnection.EnableOptimizedParameterBinding = $EnableOptimizedParameterBinding }
         if ($PSBoundParameters.ContainsKey("UpdatedRowSource")) { $sqlConnection.UpdatedRowSource = $UpdatedRowSource }
         if ($PSBoundParameters.ContainsKey("StatementCompleted")) { $sqlConnection.StatementCompleted = $StatementCompleted }

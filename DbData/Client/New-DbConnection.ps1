@@ -1,5 +1,9 @@
 <#
 
+.SYNOPSIS
+
+.DESCRIPTION
+
 .PARAMETER InitialCatalog
 The name of the initial catalog or database in the data source.
 
@@ -147,6 +151,12 @@ Event.
 Event.
 
 .PARAMETER Callback
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
 
 #>
 function New-DbConnection {

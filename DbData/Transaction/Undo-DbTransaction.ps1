@@ -1,17 +1,29 @@
 <#
 
+.SYNOPSIS
+
+.DESCRIPTION
+
+.PARAMETER
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
+
 #>
 
 function Undo-DbTransaction {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName="SqlCommand")]
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "SqlCommand")]
         [ValidateNotNullOrEmpty()]
         [Microsoft.Data.SqlClient.SqlCommand] $SqlCommand,
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName="DataSet")]
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "DataSet")]
         [ValidateNotNullOrEmpty()]
         [System.Data.DataSet] $DataSet,
-        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName="DataTable")]
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = "DataTable")]
         [ValidateNotNullOrEmpty()]
         [System.Data.DataTable] $DataTable,
 

@@ -1,5 +1,10 @@
 <#
 
+.SYNOPSIS
+
+.DESCRIPTION
+
+
 .PARAMETER BatchSize
 
 
@@ -17,6 +22,12 @@
 
 .PARAMETER SqlRowsCopied
 Event.
+
+.INPUTS
+
+.OUTPUTS
+
+.EXAMPLE
 
 #>
 function Invoke-DbBulkCopy {
