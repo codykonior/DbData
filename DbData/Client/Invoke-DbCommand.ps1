@@ -32,16 +32,16 @@ Mapped = Applying existing TableMappings to the incoming schema.
 
 
 .PARAMETER AcceptChangesDuringFill
-Gets or sets a value indicating whether AcceptChanges() is called on a DataRow after it is added to the DataTable during any of the Fill operations.
+Indicates whether AcceptChanges() is called on a DataRow after it is added to the DataTable during any of the Fill operations.
 
 .PARAMETER AcceptChangesDuringUpdate
-Gets or sets whether AcceptChanges() is called during a Update(DataSet).
+Whether AcceptChanges() is called during a Update(DataSet).
 
 .PARAMETER ContinueUpdateOnError
-Gets or sets a value that specifies whether to generate an exception when an error is encountered during a row update.
+Specifies whether to generate an exception when an error is encountered during a row update.
 
 .PARAMETER FillLoadOption
-Gets or sets the LoadOption that determines how the adapter fills the DataTable from the DbDataReader.
+The LoadOption that determines how the adapter fills the DataTable from the DbDataReader.
 
 OverwriteChanges = The incoming values for this row will be written to both the current value and the original value versions of the data for each column.
 PreserveChanges	= The incoming values for this row will be written to the original value version of each column. The current version of the data in each column will not be changed. This is the default.
@@ -63,10 +63,10 @@ Error = An InvalidOperationException is generated if the specified column mappin
 AddWithKey = Adds the necessary columns and primary key information to complete the schema.
 
 .PARAMETER ReturnProviderSpecificTypes
-Gets or sets whether the Fill method should return provider-specific values or common CLS-compliant values.
+Whether the Fill method should return provider-specific values or common CLS-compliant values.
 
 .PARAMETER UpdateBatchSize
-Gets or sets the number of rows that are processed in each round-trip to the server.
+The number of rows that are processed in each round-trip to the server.
 
 0 = There is no limit on the batch size.
 1 = Disables batch updating.

@@ -254,7 +254,8 @@ function Publish-DbSchema {
                 $Connection.Close()
             }
         }
-
-        end {
-        }
     }
+
+    end {
+    }
+}

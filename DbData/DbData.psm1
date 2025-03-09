@@ -2,7 +2,6 @@
 param (
     [bool] $Debugging
 )
-
 # Because these are set once in a script scope (modules and functions are all considered in one script scope)
 # they will be effective in every function, and won't override or be overridden by changes in parent scopes.
 Set-StrictMode -Version Latest
@@ -20,7 +19,7 @@ Set-Alias -Name Select-Object -Value Microsoft.PowerShell.Utility\Select-Object
 if ($Debugging) {
     foreach ($fileName in (Get-ChildItem $PSScriptRoot "*-*.ps1" -Recurse -Exclude "*.Steps.ps1", "*.Tests.ps1", "*.ps1xml")) {
         try {
-            Write-Verbose "Loading function from path '$fileName'."
+            Write-Host "Loading function from path [$fileName]"
             . $fileName.FullName
         } catch {
             Write-Error $_
