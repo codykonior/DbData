@@ -60,7 +60,7 @@ function New-DbCommand {
         [Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider] $RetryLogicProvider,
         [Microsoft.Data.Sql.SqlNotificationRequest] $Notification,
         [Microsoft.Data.SqlClient.SqlTransaction] $Transaction,
-        [Parameter(Mandatory, Position=0)]
+        [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [string] $CommandText,
         [int] $CommandTimeout,
