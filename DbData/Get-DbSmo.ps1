@@ -49,11 +49,10 @@ function Get-DbSmo {
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "")]
     param (
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 1)]
-        [Microsoft.Data.SqlClient.SqlConnection] $SqlConnection,
+        [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "ServerInstance", Position = 1)]
         [Parameter(ValueFromPipelineByPropertyName, ParameterSetName = "SqlConnection", Position = 2)]
-        [Alias("ServerName")]
         [Alias("SqlServerName")]
         [Alias("DataSource")]
         [string] $ServerInstance,

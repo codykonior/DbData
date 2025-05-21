@@ -18,7 +18,7 @@ function Add-DbOpen {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, Position = 0)]
-        $SqlConnection # Microsoft.Data.SqlClient.SqlConnection
+        $SqlConnection # System.Data.SqlClient.SqlConnection
     )
 
     begin {

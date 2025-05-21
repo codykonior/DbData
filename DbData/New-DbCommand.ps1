@@ -34,16 +34,16 @@ If this parameter is specified, exceptions up to and including severity 16 will 
 Text, StoredProcedure, or TableDirect.
 
 .PARAMETER Transaction
-An existing Microsoft.Data.SqlClient.Transaction object.
+An existing System.Data.SqlClient.Transaction object.
 
 .PARAMETER VarChar
 By default strings are passed as NvarChar parameters (because a .NET [string] is Unicode by default). This can cause some extreme performance issues from implicit conversions (table scans will occur as VarChar columns are converted up to NvarChar). If you know you are reading from VarChar records then this switch allows you to force VarChar type parameters and improve performance.
 
 .INPUTS
-Pipe in a connection string, or a Microsoft.Data.SqlClient.SqlConnection object.
+Pipe in a connection string, or a System.Data.SqlClient.SqlConnection object.
 
 .OUTPUTS
-A Microsoft.Data.SqlClient.SqlCommand object.
+A System.Data.SqlClient.SqlCommand object.
 
 .EXAMPLE
 New-DbConnection .\SQL2016 master | New-DbCommand "Select * From sys.databases Where name = @DatabaseName" @{ DatabaseName = "master" } | Get-DbData
@@ -70,7 +70,7 @@ function New-DbCommand {
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
-        [Microsoft.Data.SqlClient.SqlConnection] $SqlConnection,
+        [System.Data.SqlClient.SqlConnection] $SqlConnection,
 
         [Parameter(Mandatory, Position = 0)]
         [Alias("Query")]
@@ -82,7 +82,7 @@ function New-DbCommand {
 
         [int] $CommandTimeout,
         [switch] $FireInfoMessageEventOnUserErrors,
-        [Microsoft.Data.SqlClient.SqlTransaction] $Transaction,
+        [System.Data.SqlClient.SqlTransaction] $Transaction,
 
         [switch] $VarChar
     )
@@ -91,7 +91,7 @@ function New-DbCommand {
     }
 
     process {
-        $sqlCommand = New-Object Microsoft.Data.SqlClient.SqlCommand($Command, $SqlConnection)
+        $sqlCommand = New-Object System.Data.SqlClient.SqlCommand($Command, $SqlConnection)
         $sqlCommand.CommandType = $CommandType
         if ($PSBoundParameters.ContainsKey("CommandTimeout")) {
             $sqlCommand.CommandTimeout = $CommandTimeout
@@ -105,7 +105,7 @@ function New-DbCommand {
 
         foreach ($parameterName in $Parameters.Keys) {
             # It's not safe to call the shortcut constructor because of boxing issues
-            $parameter = New-Object Microsoft.Data.SqlClient.SqlParameter
+            $parameter = New-Object System.Data.SqlClient.SqlParameter
             $parameter.ParameterName = $parameterName
             $parameter.Value = $Parameters[$parameterName]
             if ($null -eq $Parameters[$parameterName]) {

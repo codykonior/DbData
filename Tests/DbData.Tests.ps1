@@ -17,8 +17,8 @@ Describe "DbData" {
     $badSecurePassword.MakeReadOnly()
     $credential = New-Object System.Management.Automation.PSCredential($userId, $securePassword)
     $badCredential = New-Object System.Management.Automation.PSCredential($userId, $badSecurePassword)
-    $sqlCredential = New-Object Microsoft.Data.SqlClient.SqlCredential($userId, $securePassword)
-    $badSqlCredential = New-Object Microsoft.Data.SqlClient.SqlCredential($userId, $badSecurePassword)
+    $sqlCredential = New-Object System.Data.SqlClient.SqlCredential($userId, $securePassword)
+    $badSqlCredential = New-Object System.Data.SqlClient.SqlCredential($userId, $badSecurePassword)
 
     $setup = "IF OBJECT_ID('dbo.MyData') IS NOT NULL DROP TABLE dbo.MyData; CREATE TABLE dbo.MyData ([Id] INT IDENTITY(1, 1) PRIMARY KEY, SSN VARCHAR(11));"
     New-DbConnection $ServerInstance -SqlCredential $sqlCredential | New-DbCommand $setup | Get-DbData -OutputAs NonQuery | Out-Null
@@ -41,7 +41,7 @@ Describe "DbData" {
         }
         It "returns a SqlConnection" {
             $connection = New-DbConnection $ServerInstance
-            $connection.GetType().FullName | Should -Be "Microsoft.Data.SqlClient.SqlConnection"
+            $connection.GetType().FullName | Should -Be "System.Data.SqlClient.SqlConnection"
             $connection.ConnectionString | Should -Be "Data Source=$($serverInstance);Integrated Security=True"
         }
         It "uses the provided database" {

@@ -24,31 +24,13 @@ trying to be a drop-in replacement.
 
 It also provides quick access to SMO and WMI objects.
 
+___Please note: There are [minor breaking changes][3] in DbData 1.5 from previous versions of DbData.___
+
 ## Installation
 
 - `Install-Module DbData`
 
-## Requirements (3.x series)
-
-___Please note: There are [major breaking changes][3] in DbData 3.0 from previous versions of DbData. This build is experimental.___
-
-- Requires PowerShell 7.5 or later.
-- Requires the SqlServer module.
-
-Recommendations if you're using Microsoft Entra ID:
-
-```
-if (-not $PSDefaultParameterValues.ContainsKey("New-DbConnection:Authentication")) {
-    $PSDefaultParameterValues.Add("New-DbConnection:Authentication", "ActiveDirectoryDefault")
-}
-if (-not $PSDefaultParameterValues.ContainsKey("Get-DbSmo:Raw")) {
-    $PSDefaultParameterValues.Add("Get-DbSmo:Raw", $true)
-}
-```
-
-## Requirements (1.x and 2.x series)
-
-___Please note: There are [minor breaking changes][3] in DbData 1.5 from previous versions of DbData.___
+## Requirements
 
 - Requires PowerShell 2.0 or later.
 - Requires .NET 3.5 or later installed.
