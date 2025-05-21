@@ -39,7 +39,7 @@ function Publish-DbSchema {
         $originalConnectionState = $Connection.State
         try {
             $scriptText = New-Object System.Collections.Generic.List[string]
-            $server = $Connection | Get-DbServer
+            $server = $Connection | Get-DbServer -WarningAction SilentlyContinue
             if (-not $PSBoundParameters.ContainsKey("DatabaseName")) {
                 $DatabaseName = $server.ConnectionContext.DatabaseName
             }
@@ -89,33 +89,33 @@ function Publish-DbSchema {
                 foreach ($dataTableColumn in ($dataTable.Columns | Where-Object { $_.ColumnName -notin ($table.Columns | Select-Object -ExpandProperty Name) })) {
                     $hasTableChanged = $true
                     <#
-                https://learn.microsoft.com/en-us/dotnet/api/system.data.datacolumn.datatype?view=net-9.0
+                    https://learn.microsoft.com/en-us/dotnet/api/system.data.datacolumn.datatype?view=net-9.0
 
-                    Boolean
-                    Byte
-                    Byte[]
-                    Char
-                    DateOnly
-                    DateTime
-                    Decimal
-                    Double
-                    Guid
-                    Int16
-                    Int32
-                    Int64
-                    SByte
-                    Single
-                    String
-                    TimeOnly
-                    TimeSpan
-                    UInt16
-                    UInt32
-                    UInt64
+                        Boolean
+                        Byte
+                        Byte[]
+                        Char
+                        DateOnly
+                        DateTime
+                        Decimal
+                        Double
+                        Guid
+                        Int16
+                        Int32
+                        Int64
+                        SByte
+                        Single
+                        String
+                        TimeOnly
+                        TimeSpan
+                        UInt16
+                        UInt32
+                        UInt64
 
-                https://learn.microsoft.com/en-us/sql/connect/ado-net/sql-server-data-type-mappings?view=sql-server-ver16
-                [Enum]::GetValues([Microsoft.SqlServer.Management.Smo.SqlDataType])
+                    https://learn.microsoft.com/en-us/sql/connect/ado-net/sql-server-data-type-mappings?view=sql-server-ver16
+                    [Enum]::GetValues([Microsoft.SqlServer.Management.Smo.SqlDataType])
 
-                #>
+                    #>
                     $dataType = switch ($dataTableColumn.DataType.Name) {
                         "Boolean" { [Microsoft.SqlServer.Management.Smo.SqlDataType]::Bit }
                         "Byte" { [Microsoft.SqlServer.Management.Smo.SqlDataType]::TinyInt }
