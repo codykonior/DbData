@@ -68,9 +68,7 @@ function Get-DbSmo {
         [switch] $PreloadAg,
 
         $RetryCount,
-        $RetrySeconds,
-
-        [switch] $OverrideOpen
+        $RetrySeconds
     )
 
     begin {
@@ -84,10 +82,8 @@ function Get-DbSmo {
         } else {
             $connection = New-Object Microsoft.SqlServer.Management.Common.ServerConnection($ServerInstance)
         }
-        if ($OverrideOpen) {
-            # It instantiates its own connection but we'll still add our own Open logic to keep it enterprise-ready ;-)
-            Add-DbOpen $connection.SqlConnectionObject
-        }
+        # It instantiates its own connection but we'll still add our own Open logic to keep it enterprise-ready ;-)
+        Add-DbOpen $connection.SqlConnectionObject
 
         # Server can be initialised with either a server name or a serverconnection object
         $smo = New-Object Microsoft.SqlServer.Management.Smo.Server($connection)
