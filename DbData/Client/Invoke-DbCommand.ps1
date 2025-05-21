@@ -243,7 +243,7 @@ function Invoke-DbCommand {
                     if ($scalar -isnot [DBNull]) {
                         return $scalar
                     } else {
-                        return
+                        return $null
                     }
                 }
             }
@@ -334,21 +334,35 @@ function Invoke-DbCommand {
                 }
                 "PSCustomObject" {
                     foreach ($dataTable in $dataSet.Tables) {
+                        <#
+                        This has been optimized for performance.
+
+                        Doing a loop through columns and rows to construct an ordered hashtable and PSCustomObject
+                        is extremely slow, e.g. 30 seconds for just a thousand rows. Constructing a script per table
+                        which will one-shot the entire row is pretty fast, e.g. 1-2 seconds.
+
+                        Testing also showed:
+                        - Using -isnot [DBNull] is twice as fast as checking -ne [DBNull]::Value
+                        - Leaving off the else { $null } is margincally faster than else { $null }
+                        #>
+                        $dataRowScript = @"
+[PSCustomObject] @{
+$(
+    $(
+        foreach ($columnName in $dataTable.Columns.ColumnName) {
+            # Single quote string injection protection
+            $columnName = $columnName -replace '''', ''''''
+            "        '$columnName' = if (`$dataRow.'$columnName' -isnot [DBNull]) { `$dataRow.'$columnName' }"
+        }
+    ) -join [Environment]::NewLine
+)
+}
+"@
+
                         foreach ($dataRow in $dataTable.Rows) {
-                            $dataRowAsObject = [ordered] @{ }
-
-                            foreach ($columnName in $dataTable.Columns.ColumnName) {
-                                if ($dataRow.$columnName -isnot [DBNull]) {
-                                    $dataRowAsObject.$columnName = $dataRow.$columnName
-                                } else {
-                                    $dataRowAsObject.$columnName = $null
-                                }
-                            }
-
-                            [PSCustomObject] $dataRowAsObject
+                            Invoke-Expression $dataRowScript
                         }
                     }
-                    return
                 }
                 "DataSet" {
                     return $dataSet
@@ -359,10 +373,8 @@ function Invoke-DbCommand {
                 $SqlCommand.Connection.Close()
             }
         }
-
     }
 
     end {
-
     }
 }
