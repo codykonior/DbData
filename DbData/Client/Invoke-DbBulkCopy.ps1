@@ -66,10 +66,10 @@ function Invoke-DbBulkCopy {
         if ($PSBoundParameters.ContainsKey("NotifyAfter")) { $sqlBulkCopy.NotifyAfter = $NotifyAfter }
         if ($PSBoundParameters.ContainsKey("SqlRowsCopied")) { $sqlBulkCopy.SqlRowsCopied = $SqlRowsCopied }
 
-        $originalConnectionState = $SqlConnection.State
+        $originalConnectionState = $Connection.State
         try {
             if ($originalConnectionState -ne "Open") {
-                $SqlConnection.Open()
+                $Connection.Open()
             }
 
             if ($Data -is [System.Data.DataSet]) {
