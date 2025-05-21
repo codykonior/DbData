@@ -1,0 +1,157 @@
+# Generate everything for the builder
+
+$connectionBuilder = New-Object Microsoft.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
+
+$parameters = $connectionBuilder.GetPropertiesFromRegisteredType().GetEnumerator() |
+    Where-Object { $_.IsBrowsable -and -not $_.DesignTimeOnly -and -not $_.IsReadOnly } |
+    Select-Object Name, DisplayName, PropertyType, Category, Description
+
+$help = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $help.AppendLine(".PARAMETER $($parameter.Name)")
+    [void] $help.AppendLine($parameter.Description)
+    [void] $help.AppendLine()
+}
+$help.ToString()
+
+$header = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $header.AppendLine("[$(if ($parameter.PropertyType -match "^System\.(\w+)$") { $Matches[1].ToLower().Replace("boolean", "bool").Replace("int32", "int") } else { $parameter.PropertyType })] `$$($parameter.Name),")
+}
+$header.ToString()
+
+$assigns = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $assigns.AppendLine("if (`$PSBoundParameters[`"$($parameter.Name)`"]) { `$connectionStringBuilder.`"$($parameter.DisplayName)`" = `$$($parameter.Name) }")
+}
+$assigns.ToString()
+
+# Generate everything for the connection
+
+$connection = New-Object Microsoft.Data.SqlClient.SqlConnection
+
+$parameters = $connection.psobject.Properties |
+    Where-Object { $_.IsSettable } |
+    Select-Object TypeNameOfValue, Name
+
+$parameters += $connection.psobject.Members |
+    Where-Object { $_.MemberType -eq "Event" } |
+    Select-Object TypeNameOfValue, Name
+
+$help = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $help.AppendLine(".PARAMETER $($parameter.Name)")
+    [void] $help.AppendLine()
+    [void] $help.AppendLine()
+}
+$help.ToString()
+
+$header = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $header.AppendLine("[$(if ($parameter.TypeNameOfValue -match "^System\.(\w+)$") { $Matches[1].ToLower().Replace("boolean", "bool").Replace("int32", "int") } else { $parameter.TypeNameOfValue })] `$$($parameter.Name),")
+}
+$header.ToString()
+
+$assigns = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $assigns.AppendLine("if (`$PSBoundParameters[`"$($parameter.Name)`"]) { `$sqlConnection.$($parameter.Name) = `$$($parameter.Name) }")
+}
+$assigns.ToString()
+
+# Generate everything for the command
+
+$command = New-Object Microsoft.Data.SqlClient.SqlCommand
+
+$parameters = $command.psobject.Properties |
+    Where-Object { $_.IsSettable } |
+    Select-Object TypeNameOfValue, Name
+
+$parameters += $command.psobject.Members |
+    Where-Object { $_.MemberType -eq "Event" } |
+    Select-Object TypeNameOfValue, Name
+
+$help = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $help.AppendLine(".PARAMETER $($parameter.Name)")
+    [void] $help.AppendLine()
+    [void] $help.AppendLine()
+}
+$help.ToString()
+
+$header = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $header.AppendLine("[$(if ($parameter.TypeNameOfValue -match "^System\.(\w+)$") { $Matches[1].ToLower().Replace("boolean", "bool").Replace("int32", "int") } else { $parameter.TypeNameOfValue })] `$$($parameter.Name),")
+}
+$header.ToString()
+
+$assigns = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $assigns.AppendLine("if (`$PSBoundParameters[`"$($parameter.Name)`"]) { `$sqlCommand.$($parameter.Name) = `$$($parameter.Name) }")
+}
+$assigns.ToString()
+
+# Generate everything for the data adapter
+
+$sqlDataAdapter = New-Object Microsoft.Data.SqlClient.DataAdapter
+
+$parameters = $sqlDataAdapter.psobject.Properties |
+    Where-Object { $_.IsSettable } |
+    Select-Object TypeNameOfValue, Name
+
+$parameters += $sqlDataAdapter.psobject.Members |
+    Where-Object { $_.MemberType -eq "Event" } |
+    Select-Object TypeNameOfValue, Name
+
+$help = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $help.AppendLine(".PARAMETER $($parameter.Name)")
+    [void] $help.AppendLine()
+    [void] $help.AppendLine()
+}
+$help.ToString()
+
+$header = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $header.AppendLine("[$(if ($parameter.TypeNameOfValue -match "^System\.(\w+)$") { $Matches[1].ToLower().Replace("boolean", "bool").Replace("int32", "int") } else { $parameter.TypeNameOfValue })] `$$($parameter.Name),")
+}
+$header.ToString()
+
+$assigns = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $assigns.AppendLine("if (`$PSBoundParameters[`"$($parameter.Name)`"]) { `$sqlDataAdapter.$($parameter.Name) = `$$($parameter.Name) }")
+}
+$assigns.ToString()
+
+
+# Generate everything for SqlBulkCopy
+
+$sqlBulkCopy = New-Object Microsoft.Data.SqlClient.SqlBulkCopy((New-DbConnection))
+
+$parameters = $sqlBulkCopy.psobject.Properties |
+    Where-Object { $_.IsSettable } |
+    Select-Object TypeNameOfValue, Name
+
+$parameters += $sqlBulkCopy.psobject.Members |
+    Where-Object { $_.MemberType -eq "Event" } |
+    Select-Object TypeNameOfValue, Name
+
+$help = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $help.AppendLine(".PARAMETER $($parameter.Name)")
+    [void] $help.AppendLine()
+    [void] $help.AppendLine()
+}
+$help.ToString()
+
+$header = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $header.AppendLine("[$(if ($parameter.TypeNameOfValue -match "^System\.(\w+)$") { $Matches[1].ToLower().Replace("boolean", "bool").Replace("int32", "int") } else { $parameter.TypeNameOfValue })] `$$($parameter.Name),")
+}
+$header.ToString()
+
+$assigns = New-Object System.Text.StringBuilder
+foreach ($parameter in $parameters) {
+    [void] $assigns.AppendLine("if (`$PSBoundParameters[`"$($parameter.Name)`"]) { `$sqlBulkCopy.$($parameter.Name) = `$$($parameter.Name) }")
+}
+$assigns.ToString()
+

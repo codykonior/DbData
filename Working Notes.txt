@@ -1,0 +1,199 @@
+Provide some default filters, and let you attach your own filter
+- connection filter, add the .database.azure.net if it's a certain type
+- connection filter, switch to a sql password based on the host name
+
+        <# This property does not give a FQDN so we must construct one #>
+        if ($PSItem -is [Microsoft.Azure.Commands.Sql.Database.Model.AzureSqlDatabaseModel]) {
+            if ($DataSource -notlike "*.database.windows.net") {
+                $DataSource += ".database.windows.net"
+            }
+        }
+
+function MyBuilderCallback {
+    [cmdletbinding()]
+    param ($InputObject)
+
+    process {
+        if ($InputObject."Data Source" -notlike "*.*") {
+            Write-Warning "Updating Data Source"
+            $InputObject."Data Source" = "$($InputObject."Data Source").database.windows.net"
+            $InputObject.Authentication = "ActiveDirectoryDefault"
+        }
+    }
+}
+
+
+if ($PSDefaultParameterValues["New-DbConnection:Callback"] -ne "MyBuilderCallback") {
+    $PSDefaultParameterValues["New-DbConnection:Callback"] = "MyBuilderCallback"
+}
+
+set-strictmode -version latest
+$erroractionpreference = "stop"
+
+import-module dbdata -force
+$connection = new-Dbconnection -serverinstance ck-dbdata.database.windows.net -databasename my-database-sample -Authentication activedirectorydefault
+$connection
+"---"
+$connection = new-Dbconnection -serverinstance ck-dbdata.database.windows.net -databasename my-database-sample -Authentication activedirectorydefault
+$connection
+"---"
+$connection = new-Dbconnection -serverinstance ck-dbdata -databasename my-database-sample
+$connection
+"---"
+
+
+$connection = new-Dbconnection -serverinstance ck-dbdata.database.windows.net -databasename my-database-sample -Authentication activedirectorydefault
+$command = $connection | new-Dbcommand "select * from sys.dm_os_performance_counters"
+$dataset = $command | invoke-Dbcommand -outputas dataset
+
+$dataset = $connection | New-DbCommand "Select * From sys.databases; Select * From sys.database_files" | invoke-Dbcommand -TableMapping "Databases", "Files" -As DataSet
+$dataset.Tables["Databases"]
+$dataset.Tables["Files"]
+
+
+$command = $connection | new-Dbcommand "create table dbo.TestHeap (database_id int, file_id int, page_id int, last_update_date datetime2)"
+$command | invoke-Dbcommand -outputas nonquery
+
+$command = $connection | new-Dbcommand "create table dbo.Test (database_id int, file_id int, page_id int, last_update_date datetime2, constraint PK_Test primary key (database_id, file_id, page_id))"
+$command | invoke-Dbcommand -outputas nonquery
+
+$command = $connection | new-Dbcommand "select * from dbo.Test" | start-Dbtransaction -passthru
+$data = $command | invoke-Dbcommand
+$command | complete-Dbtransaction
+
+$command = $connection | new-Dbcommand "select * from dbo.Test" | start-Dbtransaction -passthru
+$data = $command | invoke-Dbcommand -alter -outputas datatable
+$data.Alter(@{database_id = 1; file_id = 1; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$data.Alter(@{database_id = 1; file_id = 2; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$data.Alter(@{database_id = 2; file_id = 1; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$data.Alter(@{database_id = 2; file_id = 2; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$data.Alter(@{database_id = 2; file_id = 3; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$command | complete-Dbtransaction
+
+$command = $connection | new-Dbcommand "select * from dbo.Test" | start-Dbtransaction -passthru
+$data = $command | invoke-Dbcommand -alter -outputas datatable
+$data.rows[3].Delete()
+$data.Alter()
+$command | complete-Dbtransaction
+
+import-module ado -force
+$command = $connection | new-Dbcommand "select * from dbo.Test" | start-Dbtransaction -passthru
+$data = $command | invoke-Dbcommand -alter -outputas datatable
+$data
+$data.alter(@{database_id = 1; file_id = 1; page_id = 1; last_update_date = (get-date).todatetime($null)})
+$data
+$command | complete-Dbtransaction
+
+import-module ado -force
+$command = $connection | new-Dbcommand "select * from dbo.Test" | start-Dbtransaction -passthru
+$data = $command | invoke-Dbcommand -alter -outputas datatable
+$data
+"."
+$data.rows[3].Delete()
+"."
+$data.Alter()
+"."
+$data
+$command | undo-Dbtransaction
+"."
+$data
+
+
+set-strictmode -version latest
+$erroractionpreference = "stop"
+import-module ado -force
+$connection = new-Dbconnection -serverinstance ck-dbdata.database.windows.net -databasename my-database-sample -Authentication activedirectorydefault
+$command = $connection | new-Dbcommand "select top 10 * from sys.dm_os_performance_counters"
+$dataset = $command | invoke-Dbcommand -outputas dataset -tablemapping @("PerformanceCounters")
+$dataset.tables[0].constraints.add("PK_PerformanceCounters", @($dataset.Tables[0].Columns["object_name"], $dataSet.Tables[0].Columns["counter_name"], $dataSet.Tables[0].Columns["instance_name"]), $true)
+
+import-module ado -force; $connection | publish-Dbschema -dataset $dataset  -script -verbose
+
+[Microsoft.SqlServer.Management.Smo.ScriptingOptions]::new()
+
+$connection | new-Dbcommand "select * from sys.tables" | invoke-Dbcommand  | sort-object create_date
+
+$connection | new-Dbcommand "drop table dbo.[table]" | invoke-Dbcommand -as nonquery
+$connection | new-Dbcommand "drop table dbo.test" | invoke-Dbcommand -as nonquery
+$connection | new-Dbcommand "drop table dbo.testheap" | invoke-Dbcommand -as nonquery
+$connection | new-Dbcommand "drop table dbo.suspect_pages" | invoke-Dbcommand -as nonquery
+
+
+
+
+$Uri = 'https://myfunctionapp.azurewebsites.net'
+
+$res = Invoke-WebRequest -Uri $Uri -Method GET -Headers @{Metadata="true"} -UseBasicParsing
+$content = $res.Content | ConvertFrom-Json
+$generatedaccessToken = $content.access_token
+$generatedaccessToken
+
+///
+
+old
+
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+if (-not $PSDefaultParameterValues.ContainsKey("New-DbConnection:Authentication")) {
+    $PSDefaultParameterValues.Add("New-DbConnection:Authentication", "ActiveDirectoryDefault")
+}
+if (-not $PSDefaultParameterValues.ContainsKey("Get-DbSmo:Raw")) {
+    $PSDefaultParameterValues.Add("Get-DbSmo:Raw", $true)
+}
+
+New-DbConnection -ServerInstance ck-dbdata -DatabaseName my-database
+
+
+$sql = New-DbConnection ck-dbdata.ck-dbdata.database.windows.net my-database-sample -authentication activedirectorydefault | New-DbCommand "Select @@Trancount" | Enter-DbTransaction "ABC" -PassThru
+$sql | Get-DbData -As Scalar
+$sql | Exit-DbTransaction -Rollback
+$sql | Get-DbData -As Scalar
+
+import-module dbdata -force
+
+
+New-DbConnection ck-dbdata my-database | New-DbCommand "If Object_Id('dbo.Moo', 'U') Is Not Null Drop Table dbo.Moo; Create Table dbo.Moo (A Int Identity (1, 1) Primary Key, B Nvarchar(Max)); Dbcc Checkident('dbo.Moo', Reseed, 100);" | Get-DbData -As NonQuery | Out-Null
+$dbData = New-DbConnection ck-dbdata my-database | New-DbCommand "Select * From dbo.Moo;" | Get-DbData -As DataTable -TableMapping @("Moo") -Alter
+$dbData.Alter(@{ B = "A" }) | Out-Null
+$dbData.Alter(@{ B = "B" }) | Out-Null
+$dbData.Alter(@{ A = 100; B = "C" }) | Out-Null
+$dbData.Alter(@{ B = "D" }) | Out-Null
+New-DbConnection ck-dbdata my-database | New-DbCommand "Truncate Table dbo.Moo;" | Get-DbData -As NonQuery | Out-Null
+New-DbConnection ck-dbdata my-database | New-DbBulkCopy -Data $dbData -Option "KeepIdentity"
+New-DbConnection ck-dbdata my-database | New-DbCommand "Select * From dbo.Moo;" | Get-DbData
+
+/////
+
+
+
+function MyBuilderCallback {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ParameterSetName="ConnectionStringBuilder")]
+        [ValidateNotNullOrEmpty()]
+        [Microsoft.Data.SqlClient.SqlConnectionStringBuilder] $ConnectionStringBuilder,
+        [Parameter(Mandatory, ParameterSetName="Connection")]
+        [ValidateNotNullOrEmpty()]
+        [Microsoft.Data.SqlClient.SqlConnection] $Connection
+    )
+
+    process {
+        if ($PSCmdlet.ParameterSetName -eq "ConnectionStringBuilder") {
+            if (...) {
+                $ConnectionStringBuilder."Trust Server Certificate" = $true
+            }
+            if ($ConnectionStringBuilder."Data Source" -notlike "*.database.windows.net") {
+                $ConnectionStringBuilder."Data Source" += ".database.windows.net"
+            }
+        } else {
+            $Connection.Credential = New-Object Microsoft.Data.SqlClient.SqlCredential(..., ...)
+            # or
+            $Connection.AccessToken = ...
+        }
+    }
+}
+
+if ($PSDefaultParameterValues["New-DbConnection:Callback"] -ne "MyBuilderCallback") {
+    $PSDefaultParameterValues["New-DbConnection:Callback"] = "MyBuilderCallback"
+}
